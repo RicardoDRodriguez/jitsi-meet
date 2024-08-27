@@ -43,6 +43,10 @@ export interface IParticipant {
     supportsRemoteControl?: boolean;
 }
 
+export interface IGiniParticipant extends IParticipant {
+
+}
+
 export interface ILocalParticipant extends IParticipant {
     audioOutputDeviceId?: string;
     cameraDeviceId?: string;
