@@ -1071,7 +1071,8 @@ var config = {
     // If third party requests are disabled, no other server will be contacted.
     // This means avatars will be locally generated and external stats integration
     // will not function.
-    // disableThirdPartyRequests: false,
+    //disableThirdPartyRequests: false,
+    //enableUserRolesBasedOnToken: false,
 
 
     // Peer-To-Peer mode: used (if enabled) when there are just 2 participants.
