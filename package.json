@@ -218,7 +218,8 @@
     "tsc-test:web": "tsc --project tsconfig.web.json --listFilesOnly | grep -v node_modules | grep native",
     "tsc-test:native": "tsc --project tsconfig.native.json --listFilesOnly | grep -v node_modules | grep web",
     "start": "make dev",
-    "test": "DOTENV_CONFIG_PATH=tests/.env wdio run tests/wdio.conf.ts"
+    "test": "DOTENV_CONFIG_PATH=tests/.env wdio run tests/wdio.conf.ts",
+    "package": "npx webpack --config webpack.config.js"
   },
   "resolutions": {
     "@types/react": "17.0.14",
