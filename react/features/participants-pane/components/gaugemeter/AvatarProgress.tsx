@@ -6,7 +6,22 @@ import DataBaseForGauge from './DataBaseForGauge';
 const database = new DataBaseForGauge();
 
 interface AvatarProgressChartProps {
- // database: DataBaseForGauge;
+  // database: DataBaseForGauge;
+}
+
+function getFormatTime(milliseconds: number): string {
+  try {
+    if (typeof milliseconds !== 'number' || isNaN(milliseconds)) {
+      throw new Error('==== 0. Participante.ts - Erro em formatar campo de minutos e segundos');
+    }
+    const totalSeconds = Math.floor(milliseconds / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${minutes}m ${seconds}s`;
+  } catch (error) {
+    console.error(error.message);
+    return '0m 0s';
+  }
 }
 
 const AvatarProgress: React.FC<AvatarProgressChartProps> = ({ }) => {
@@ -20,18 +35,22 @@ const AvatarProgress: React.FC<AvatarProgressChartProps> = ({ }) => {
 
     fetchParticipants();
 
+
     const interval = setInterval(async () => {
       const participants = await database.getParticipantesPercentualAcumuloFala();
       console.log(`=== AvatarProgress === 1.Lista de participantes para serem processados`, participants);
       setParticipantsProgress((prevParticipants) =>
         participants.map((participant) => ({
           ...participant,
-          percentualAcumuloFala: isNaN(participant.percentualAcumuloFala) || participant.percentualAcumuloFala < 0 
-            ? 0 
-            : participant.percentualAcumuloFala     
+          percentualAcumuloFala: isNaN(participant.percentualAcumuloFala) || participant.percentualAcumuloFala < 0
+            ? 0
+            : participant.percentualAcumuloFala
         }))
       );
-    }, 3000);
+    }, 1000);
+
+    // Certifique-se de limpar o intervalo quando não for mais necessário
+    // clearInterval(interval);
 
     return () => clearInterval(interval);
   }, []);
@@ -40,12 +59,17 @@ const AvatarProgress: React.FC<AvatarProgressChartProps> = ({ }) => {
     <div>
       {participantsProgress.map((participant) => (
         <div key={participant.id}>
-          <span style={{ marginRight: '10px' }}>{participant.name}</span>
+          <span
+            style={{ marginRight: '10px', fontSize: '11px' }}
+            title="Nome do participante | Tempo de Presença | Tempo de Fala">
+            {participant.name} | {getFormatTime(participant.tempoPresenca)} | {getFormatTime(participant.tempoDeFala)}
+          </span>
           <ProgressBar
             completed={participant.percentualAcumuloFala.toFixed(1)}
             customLabel={`${participant.percentualAcumuloFala.toFixed(1)}%`}
             labelAlignment="outside"
             labelColor="white"
+            labelSize="11px"
             bgColor="#ef6c00"
           />
         </div>

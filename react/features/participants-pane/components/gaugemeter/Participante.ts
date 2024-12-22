@@ -10,14 +10,14 @@ class Participante {
   proporcaoAcumuladaPopulacao: number = 0;
   fatorAcumuladoCurvaLorenz: number = 0;
   avatarURL: string = '';
-  botType?: string = '';
+  botType?: string;
   displayName: string = '';
   dominantSpeaker?: boolean | undefined;
   e2eeEnabled?: boolean | undefined;
   e2eeSupported?: boolean | undefined;
   e2eeVerificationAvailable?: boolean | undefined;
   e2eeVerified?: boolean | undefined;
-  email?: string = '';
+  email?: string;
   id: string = '';
   isJigasi?: boolean | undefined;
   isReplaced?: boolean | undefined;
@@ -39,7 +39,7 @@ class Participante {
   
   constructor(
     id: string,
-    sala: string ='',
+    sala: string = '',
     displayName: string = '',
     avatar: string = '',
     entradaNaSala: number = 0,
@@ -61,6 +61,7 @@ class Participante {
     this.proporcaoAcumuladaPopulacao = 0.0;
     this.fatorAcumuladoCurvaLorenz = 0.0;
   }
+ 
 }
 
 export default Participante;
