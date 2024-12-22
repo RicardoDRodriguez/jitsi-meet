@@ -9,12 +9,10 @@ const chartStyle: React.CSSProperties = {
 };
 
 interface LiveGaugeChartProps {
-//  database: DataBaseForGauge;
+  // database: DataBaseForGauge;
 }
 
-
-const LiveGaugeChart: React.FC<LiveGaugeChartProps> = ({ }) => {
-
+const LiveGaugeChart: React.FC<LiveGaugeChartProps> = () => {
   const [value, setValue] = useState<number>(0.0); // Initial value
   const database = new DataBaseForGauge();
 
@@ -36,11 +34,13 @@ const LiveGaugeChart: React.FC<LiveGaugeChartProps> = ({ }) => {
     };
 
     fetchValue(); // Fetch initial value
-
+    
     const interval = setInterval(fetchValue, 3000); // Update every 3 seconds
 
     return () => clearInterval(interval);
-  }, [database]);
+  }, []);
+
+  const formattedValue = `${parseFloat((value*100).toString()).toFixed(1)}%`;
 
   return (
     <div>
@@ -54,10 +54,12 @@ const LiveGaugeChart: React.FC<LiveGaugeChartProps> = ({ }) => {
         arcPadding={0.00}
         textColor="#FFFFFF"
         needleColor="#FFFFFF" // Cor do ponteiro
-        formatTextValue={(value: string): string => `${parseFloat(value).toFixed(1)}%`}
+        hideText={true}
       />
+      <div style={{ position: 'absolute', top: '10%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 1, fontSize: '14px', color: '#FFFFFF' }}> 
+        {formattedValue}
+      </div>
     </div>
-    
   );
 };
 
