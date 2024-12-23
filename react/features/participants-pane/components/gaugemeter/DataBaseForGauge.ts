@@ -15,13 +15,30 @@ class DataBaseForGauge {
   static room: string = '';
   static conference: any;
   static roomStarted: number;
-   
+
 
 
   async clearData(): Promise<void> {
-    DataBaseForGauge.participantes = [];
-   
+    const removerParticipantesNaoOrdenados = () => {
+      const sortedParticipantIds: any = getSortedParticipantIds(DataBaseForGauge.state);
+  
+      // Filtra os participantes que não estão na lista de IDs ordenados
+      DataBaseForGauge.participantes = DataBaseForGauge.participantes.filter(participante => 
+        sortedParticipantIds.includes(participante.id)
+      );
+  
+      console.log('==== 0. ClearData = Participantes atualizados:', DataBaseForGauge.participantes);
+    };
+  
+    // Verifica se há participantes antes de executar a função
+    if (DataBaseForGauge.participantes.length > 0) {
+      removerParticipantesNaoOrdenados();
+    } else {
+      console.log('==== 1. ClearData = Nenhum participante encontrado.');
+    }
   }
+  
+  
 
   async percorrerParticipantes(): Promise<void> {
     console.log("Percorrendo todos os participantes:");
@@ -36,11 +53,11 @@ class DataBaseForGauge {
 
   async setStateAndConference(): Promise<void> {
     DataBaseForGauge.state = APP.store.getState();
-    DataBaseForGauge.conference = APP.conference;    
+    DataBaseForGauge.conference = APP.conference;
     if (!DataBaseForGauge.roomStarted) {
       DataBaseForGauge.roomStarted = Date.now();
     }
-    console.log("==== 0 = clearData -> roomStarted: ", DataBaseForGauge.roomStarted);
+    console.log("==== 0. setStateAndConference -> roomStarted: ", DataBaseForGauge.roomStarted);
   }
 
   /**
@@ -202,7 +219,7 @@ class DataBaseForGauge {
     const totalTempoDePresença = DataBaseForGauge.participantes.reduce((total, participante) => {
       return total + participante.tempoPresenca;
     }, 0);
-    
+
 
     console.log('==== 3. CalcularGini - totalTempoPresenca = ', totalTempoDePresença);
 
@@ -313,38 +330,60 @@ class DataBaseForGauge {
 
   async processarParticipante(key: string, room: string): Promise<void> {
     console.log(` ==== 1. processarParticipante --> Processando chave: ${key} no foreach em processarParticipante ===`);
-    const found = this.hasParticipante(key);
 
-    if (!found) {
-      console.log(` ==== 2. processarParticipante --> Novo Registro no Banco de Dados: ${key} ===`);
-      const participante: Participante = new Participante(key, room);
-      const partic: IParticipant | undefined = getParticipantById(DataBaseForGauge.state, key);
+    const now = new Date().getTime()
 
-      console.log(`==== 3. processarParticipante --> Dados de partic ${key}: `, partic);
+    const atualizarParticipante = (participante:Participante, stats:any, partic:any, now:number) => {
+      participante.tempoDeFala = stats.getTotalDominantSpeakerTime() ?? participante.tempoDeFala;
+      participante.tempoPresenca = now - participante.entradaNaSala;
+      participante.avatarURL = partic.avatarURL ?? participante.avatarURL;
+      participante.displayName = partic.displayName ?? participante.displayName;
+      participante.name = partic.name ?? participante.name;
+      participante.role = partic.role ?? participante.role;
+      participante.dominantSpeaker = partic.dominantSpeaker ?? participante.dominantSpeaker;
+      participante.fatorTempoPresenca = 0;
+      participante.fatorAcumuladoCurvaLorenz = 0;
+      console.log(`==== 5.1. processarParticipante  --> participante ${participante.id}, participante.fatorDePresença ${participante.fatorTempoPresenca}: `);
+      console.log(`==== 6. processarParticipante  --> participante atualizado ${participante.id}: `, participante);
+    };
 
-      if (partic) {
-        const speakerStats = DataBaseForGauge.conference.getSpeakerStats();
-        const now = new Date().getTime()
-        for (const userId in speakerStats) {
-          if (userId === key) {
-            console.log(`==== 4. processarParticipante --> encontrei em SpeakerStats ${key}: `, speakerStats);
-            const stats = speakerStats[userId];
-            console.log(`==== 5. processarParticipante  --> encontrei em stats ${key}: `, stats);
-            participante.tempoDeFala = stats.getTotalDominantSpeakerTime() ?? participante.tempoDeFala;
-            participante.entradaNaSala = DataBaseForGauge.roomStarted ?? participante.entradaNaSala;
-            participante.tempoPresenca = now - DataBaseForGauge.roomStarted;
-            participante.avatarURL = partic.avatarURL ?? participante.avatarURL;
-            participante.displayName = partic.displayName ?? participante.displayName;
-            participante.name = partic.name ?? participante.name;
-            participante.role = partic.role ?? participante.role;
-            participante.dominantSpeaker = partic.dominantSpeaker ?? participante.dominantSpeaker;
-            participante.fatorTempoPresenca = 0;
-            console.log(`==== 5.1. processarParticipante  --> participante ${key}, participante.fatorDePresença ${participante.fatorTempoPresenca}: `);
-            participante.fatorAcumuladoCurvaLorenz = 0;
-            console.log(`==== 6. processarParticipante  --> participante montado ${key}: `, participante);
-            DataBaseForGauge.participantes.push(participante);
-            break;
+    const adicionarParticipante = (participante:Participante, stats:any, partic:any, now:number) => {
+      const novoParticipante = {
+        ...participante,
+        tempoDeFala: stats.getTotalDominantSpeakerTime() ?? participante.tempoDeFala,
+        entradaNaSala: now,
+        tempoPresenca: 0,
+        avatarURL: partic.avatarURL ?? participante.avatarURL,
+        displayName: partic.displayName ?? participante.displayName,
+        name: partic.name ?? participante.name,
+        role: partic.role ?? participante.role,
+        dominantSpeaker: partic.dominantSpeaker ?? participante.dominantSpeaker,
+        fatorTempoPresenca: 0,
+        fatorAcumuladoCurvaLorenz: 0
+      };
+      console.log(`==== 7. processarParticipante  --> novo participante ${novoParticipante.id}: `, novoParticipante);
+      DataBaseForGauge.participantes.push(novoParticipante);
+    };
+
+    const partic: IParticipant | undefined = getParticipantById(DataBaseForGauge.state, key);
+    if (partic) {
+      const speakerStats = DataBaseForGauge.conference.getSpeakerStats();
+      const now = new Date().getTime();
+      const existingParticipant = DataBaseForGauge.participantes.find(p => p.id === key);
+      for (const userId in speakerStats) {
+        if (userId === key) {
+          console.log(`==== 4. processarParticipante --> encontrei em SpeakerStats ${key}: `, speakerStats);
+          const stats = speakerStats[userId];
+          console.log(`==== 5. processarParticipante --> encontrei em stats ${key}: `, stats);
+          if (existingParticipant) {
+            atualizarParticipante(existingParticipant, stats, partic, now);
           }
+          else {
+            const participante: Participante = new Participante(key, room);
+            adicionarParticipante(participante, stats, partic, now);
+
+          }
+          break;
         }
       }
     }
