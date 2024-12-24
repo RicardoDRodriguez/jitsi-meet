@@ -6,6 +6,7 @@ import { IParticipant } from "../../../base/participants/types";
 import { getAnalyticsRoomName, getRoomName } from "../../../base/conference/functions";
 import { getSortedParticipantIds } from "../../functions";
 import moment from 'moment';
+import JitsiMeetExternalAPI from "../../../../../modules/API/external/external_api";
 
 
 class DataBaseForGauge {
@@ -15,8 +16,12 @@ class DataBaseForGauge {
   static room: string = '';
   static conference: any;
   static roomStarted: number;
+  private static instance: DataBaseForGauge | null = null;
 
-
+  private constructor() {
+      // Inicialização da classe (se necessário)
+      console.log("==== 0. ClearData = construtor do DataBaseForGauge chamado.");
+  }
 
   async clearData(): Promise<void> {
     const removerParticipantesNaoOrdenados = () => {
@@ -52,13 +57,18 @@ class DataBaseForGauge {
   **/
 
   async setStateAndConference(): Promise<void> {
+    while (!APP.store || !APP.conference) {
+        await new Promise(resolve => setTimeout(resolve, 100)); // Espera um pouco
+        console.warn("==== 0. setStateAndConference -> Aguardando APP.store e APP.conference...");
+    }
     DataBaseForGauge.state = APP.store.getState();
     DataBaseForGauge.conference = APP.conference;
     if (!DataBaseForGauge.roomStarted) {
       DataBaseForGauge.roomStarted = Date.now();
     }
-    console.log("==== 0. setStateAndConference -> roomStarted: ", DataBaseForGauge.roomStarted);
-  }
+    console.log("==== 1. setStateAndConference -> roomStarted: ", DataBaseForGauge.roomStarted);
+}
+
 
   /**
     * Carrega a lista de participantes para ser processada por GaugeMeter
@@ -388,8 +398,24 @@ class DataBaseForGauge {
       }
     }
   }
+
+  public static getInstance(): DataBaseForGauge {
+    if (!DataBaseForGauge.instance) {
+        DataBaseForGauge.instance = new DataBaseForGauge();
+        (window as any).dataBaseForGauge = DataBaseForGauge.instance; // Mantém no window para compatibilidade com código antigo
+        console.log("==== 6. getInstance -> Instancia criada no getInstance")
+    }else{
+        console.log("==== 7. getInstance -> Instancia já existia no getInstance")
+    }
+    return DataBaseForGauge.instance;
+  }
+
 }
 
-export default DataBaseForGauge;
+
+
+// Criar uma instância singleton do DataBaseForGauge
+export default DataBaseForGauge.getInstance(); // Exportar para uso em outros módulos
+
 
 

@@ -501,7 +501,7 @@ export function createVirtualScreenshareParticipant(sourceName: string, local: b
             conference,
             fakeParticipant: local ? FakeParticipant.LocalScreenShare : FakeParticipant.RemoteScreenShare,
             id: sourceName,
-            name: ownerName
+            name: ownerName,
         }));
     };
 }

@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import ProgressBar from "@ramonak/react-progress-bar";
 import Participant from "./Participante";
-import DataBaseForGauge from './DataBaseForGauge';
-
-const database = new DataBaseForGauge();
+import dataBaseForGauge from './DataBaseForGauge';
 
 interface AvatarProgressChartProps {
   // database: DataBaseForGauge;
@@ -29,7 +27,7 @@ const AvatarProgress: React.FC<AvatarProgressChartProps> = ({ }) => {
 
   useEffect(() => {
     const fetchParticipants = async () => {
-      const participants = await database.getParticipantesPercentualAcumuloFala();
+      const participants = await dataBaseForGauge.getParticipantesPercentualAcumuloFala();
       setParticipantsProgress(participants);
     };
 
@@ -37,7 +35,7 @@ const AvatarProgress: React.FC<AvatarProgressChartProps> = ({ }) => {
 
 
     const interval = setInterval(async () => {
-      const participants = await database.getParticipantesPercentualAcumuloFala();
+      const participants = await dataBaseForGauge.getParticipantesPercentualAcumuloFala();
       console.log(`=== AvatarProgress === 1.Lista de participantes para serem processados`, participants);
       setParticipantsProgress((prevParticipants) =>
         participants.map((participant) => ({

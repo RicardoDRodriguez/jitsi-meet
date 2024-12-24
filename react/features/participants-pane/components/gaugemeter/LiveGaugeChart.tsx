@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import GaugeChart from 'react-gauge-chart';
-import DataBaseForGauge from '././DataBaseForGauge';
+import dataBaseForGauge from '././DataBaseForGauge';
 import { withPixelLineHeight } from "../../../base/styles/functions.web";
 import { makeStyles } from 'tss-react/mui';
 
@@ -14,12 +14,11 @@ interface LiveGaugeChartProps {
 
 const LiveGaugeChart: React.FC<LiveGaugeChartProps> = () => {
   const [value, setValue] = useState<number>(0.0); // Initial value
-  const database = new DataBaseForGauge();
-
+  
   // Simulate live data updates     
   useEffect(() => {
     const fetchValue = async () => {
-      let newValue = await database.calcularGini();
+      let newValue = await dataBaseForGauge.calcularGini();
       console.log("=== New Value: ", newValue);
 
       if (Number.isNaN(newValue)) {

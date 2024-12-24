@@ -39,6 +39,7 @@ export interface IParticipant {
     region?: string;
     remoteControlSessionStatus?: boolean;
     role?: string;
+    entryTime?: number;
     sources?: Map<string, Map<string, ISourceInfo>>;
     supportsRemoteControl?: boolean;
 }
