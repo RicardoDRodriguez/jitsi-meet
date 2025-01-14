@@ -41,6 +41,8 @@ export interface IParticipant {
     role?: string;
     sources?: Map<string, Map<string, ISourceInfo>>;
     supportsRemoteControl?: boolean;
+    userStartTime?: number;
+
 }
 
 export interface ILocalParticipant extends IParticipant {

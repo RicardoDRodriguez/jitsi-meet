@@ -219,6 +219,9 @@ export function muteRemoteParticipant(id: string, mediaType: string) {
  */
 export function participantJoined(participant: IParticipant) {
     // Only the local participant is not identified with an id-conference pair.
+    
+  
+
     if (participant.local) {
         return {
             type: PARTICIPANT_JOINED,

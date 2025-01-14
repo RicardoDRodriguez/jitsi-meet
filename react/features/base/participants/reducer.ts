@@ -622,9 +622,14 @@ function _participantJoined({ participant }: { participant: IParticipant; }) {
         pinned,
         presence,
         role,
-        sources
+        sources,
+        userStartTime,
     } = participant;
     let { conference, id } = participant;
+
+    const now = new Date();
+    const currentTimeInMilliseconds: number = now.getTime();
+    
 
     if (local) {
         // conference
@@ -633,10 +638,12 @@ function _participantJoined({ participant }: { participant: IParticipant; }) {
         // JitsiConference because it is identified by the very fact that it is
         // the local participant.
         conference = undefined;
-
         // id
         id || (id = LOCAL_PARTICIPANT_DEFAULT_ID);
     }
+
+    console.log(`====1. _participantJoined ${name} at ${currentTimeInMilliseconds}`);
+
 
     return {
         avatarURL,
@@ -653,6 +660,7 @@ function _participantJoined({ participant }: { participant: IParticipant; }) {
         name,
         pinned: pinned || false,
         presence,
+        userStartTime: currentTimeInMilliseconds,
         role: role || PARTICIPANT_ROLE.NONE,
         sources
     };
