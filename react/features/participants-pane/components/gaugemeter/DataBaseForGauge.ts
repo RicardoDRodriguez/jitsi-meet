@@ -3,11 +3,8 @@ import Participante from "./Participante";
 import { IReduxState } from "../../../app/types";
 import { getParticipantById } from "../../../base/participants/functions";
 import { IParticipant } from "../../../base/participants/types";
-import { getAnalyticsRoomName, getRoomName } from "../../../base/conference/functions";
 import { getSortedParticipantIds } from "../../functions";
-import moment from 'moment';
-import JitsiMeetExternalAPI from "../../../../../modules/API/external/external_api";
-import { ISpeaker, ISpeakerStats } from "../../../speaker-stats/reducer";
+import { ISpeaker } from "../../../speaker-stats/reducer";
 
 
 class DataBaseForGauge {

@@ -12,12 +12,17 @@ function getFormatTime(milliseconds: number): string {
     if (typeof milliseconds !== 'number' || isNaN(milliseconds)) {
       throw new Error('==== 0. Participante.ts - Erro em formatar campo de minutos e segundos');
     }
+
     const totalSeconds = Math.floor(milliseconds / 1000);
     const minutes = Math.floor(totalSeconds / 60);
     const seconds = totalSeconds % 60;
     return `${minutes}m ${seconds}s`;
-  } catch (error) {
-    console.error(error.message);
+  } catch (error: unknown) { // Corrigido aqui
+    if (error instanceof Error) { 
+      console.error(error.message); 
+    } else {
+      console.error('An unexpected error occurred.');
+    }
     return '0m 0s';
   }
 }

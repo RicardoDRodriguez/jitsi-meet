@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from "react";
 import GaugeChart from 'react-gauge-chart';
 import dataBaseForGauge from '././DataBaseForGauge';
-import { withPixelLineHeight } from "../../../base/styles/functions.web";
-import { makeStyles } from 'tss-react/mui';
 
 const chartStyle: React.CSSProperties = {
   height: 10
@@ -34,7 +32,7 @@ const LiveGaugeChart: React.FC<LiveGaugeChartProps> = () => {
 
     fetchValue(); // Fetch initial value
     
-    const interval = setInterval(fetchValue, 1000); // Update every 3 seconds
+    const interval = setInterval(fetchValue, 1000); // Update every 1 seconds
 
     return () => clearInterval(interval);
   }, []);
