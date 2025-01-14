@@ -5,6 +5,8 @@ import { getParticipantById } from "../../../base/participants/functions";
 import { IParticipant } from "../../../base/participants/types";
 import { getSortedParticipantIds } from "../../functions";
 import { ISpeaker } from "../../../speaker-stats/reducer";
+import { getRoomName } from "../../../base/conference/functions";
+import { message } from "js-md5";
 
 
 class DataBaseForGauge {
@@ -88,9 +90,9 @@ class DataBaseForGauge {
     DataBaseForGauge.room = '';
     try {
       DataBaseForGauge.room = getRoomName(DataBaseForGauge.state) ?? DataBaseForGauge.room;
-    } catch (erro) {
+    } catch (erro: any) {
       DataBaseForGauge.room = ' ==== Não achei a a Sala'
-      console.error(" ==== Erro assíncrono capturado:", erro);
+      console.error(" ==== Erro assíncrono capturado:", erro.message);
     }
     try {
       /**
@@ -119,8 +121,8 @@ class DataBaseForGauge {
        * Checar se no final conseguimos alimentar participantes.
        */
       console.log(` ==== Resultado Final => sala ${DataBaseForGauge.room} em carregarParticipantes ===`, DataBaseForGauge.participantes);
-    } catch (erro) {
-      console.log(` ==== Tentativa de processar lista de participantes acarretou em erro ${erro} ===`);
+    } catch (erro: any) {
+      console.log(` ==== Tentativa de processar lista de participantes acarretou em erro ${erro.message} ===`);
     }
     return
   }
@@ -158,8 +160,8 @@ class DataBaseForGauge {
       } else {
         return 'other';
       }
-    } catch (error) {
-      console.error("Erro assíncrono capturado:", error);
+    } catch (erro: any){
+      console.error("Erro assíncrono capturado:", erro.message);
       return "Não foi possivel definir o tipo de id";
     }
   }
@@ -169,22 +171,24 @@ class DataBaseForGauge {
    * @param id chave de identificação do participante
    * @returns True se o participante já está no DataBase // False se o participante não está no DataBase
    */
+
   hasParticipante(id: string): boolean {
     let found: boolean = false;
-
+  
     if (DataBaseForGauge.participantes.length === 0) {
       return found;
     }
-
+  
     try {
       found = DataBaseForGauge.participantes.some((participante) => {
         return participante.id === id;
       });
-    } catch (erro) {
-      console.log(`hasParticipante -> Ocorreu o erro de verificar se existe o participante ${erro}`);
-    } finally {
-      return found;
+    } catch (error: any) {
+      console.log(`hasParticipante -> Ocorreu o erro de verificar se existe o participante ${error.message}`);
     }
+  
+    return found; // Retorna o valor correto após o try...catch
+  
   }
 
   async getParticipantesPercentualAcumuloFala(): Promise<Participante[]> {
