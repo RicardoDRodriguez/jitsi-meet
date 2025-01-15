@@ -50,7 +50,7 @@ const AvatarProgress: React.FC<AvatarProgressChartProps> = ({ }) => {
             : participant.percentualAcumuloFala
         }))
       );
-    }, 1000);
+    }, 11790) // intervalo de 11 segundos para a linha de progresso;
 
     // Certifique-se de limpar o intervalo quando não for mais necessário
     // clearInterval(interval);

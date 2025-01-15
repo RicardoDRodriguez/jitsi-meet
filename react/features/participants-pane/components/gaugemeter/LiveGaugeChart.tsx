@@ -32,7 +32,7 @@ const LiveGaugeChart: React.FC<LiveGaugeChartProps> = () => {
 
     fetchValue(); // Fetch initial value
     
-    const interval = setInterval(fetchValue, 1000); // Update every 1 seconds
+    const interval = setInterval(fetchValue, 10057); // Update every 10 seconds
 
     return () => clearInterval(interval);
   }, []);
