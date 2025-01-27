@@ -64,8 +64,8 @@ const AvatarProgress: React.FC<AvatarProgressChartProps> = ({ }) => {
         <div key={participant.id}>
           <span
             style={{ marginRight: '10px', fontSize: '11px' }}
-            title="Nome do participante | Tempo de Presença | Tempo de Fala">
-            {participant.name} | {getFormatTime(participant.tempoPresenca)} | {getFormatTime(participant.tempoDeFala)}
+            title="Nome do participante | Tempo de Fala | Tempo de Presença">
+            {participant.name} | {getFormatTime(participant.tempoDeFala)}| {getFormatTime(participant.tempoPresenca)} 
           </span>
           <ProgressBar
             completed={participant.percentualAcumuloFala.toFixed(1)}
@@ -75,6 +75,9 @@ const AvatarProgress: React.FC<AvatarProgressChartProps> = ({ }) => {
             labelSize="11px"
             bgColor="#ef6c00"
           />
+          <span>
+            &nbsp;
+          </span>
         </div>
       ))}
     </div>
