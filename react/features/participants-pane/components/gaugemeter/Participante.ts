@@ -36,7 +36,11 @@ class Participante {
   role?: string | undefined;
   supportsRemoteControl?: boolean | undefined;
   sala?: string | undefined;
-  
+  isOut?: boolean = false;
+  isReturned?: boolean = false;
+  timeoutMeet?: number = 0;
+  numberOfReturns?: number = 0;
+  saidas?: any|undefined;
   constructor(
     id: string,
     sala: string = '',
@@ -60,6 +64,11 @@ class Participante {
     this.percentualAcumuloFala = 0.0;
     this.proporcaoAcumuladaPopulacao = 0.0;
     this.fatorAcumuladoCurvaLorenz = 0.0;
+    this.isOut = false;
+    this.isReturned = false;
+    this.numberOfReturns = 0;
+    this.timeoutMeet = 0;
+    this.saidas=[];
   }
  
 }

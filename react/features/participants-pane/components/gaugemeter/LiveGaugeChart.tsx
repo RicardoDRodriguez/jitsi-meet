@@ -32,28 +32,31 @@ const LiveGaugeChart: React.FC<LiveGaugeChartProps> = () => {
 
     fetchValue(); // Fetch initial value
     
-    const interval = setInterval(fetchValue, 10057); // Update every 10 seconds
+    const interval = setInterval(fetchValue, 4057); // Update every 10 seconds
 
     return () => clearInterval(interval);
   }, []);
 
   const formattedValue = `${parseFloat((value*100).toString()).toFixed(1)}%`;
-
+  /*
+   arcsLength={[0.1, 0.1, 0.1, 0.4, 0.3]}
+        colors={["#E4080A", "#FF9101", "#FFDE59", "#7DDA58", "#5DE2E7"]}
+  */
   return (
     <div>
       <GaugeChart
         id="gauge-chart1"
         style={chartStyle}
         animate={false}
-        arcsLength={[0.1, 0.1, 0.1, 0.4, 0.3]}
-        colors={["#E4080A", "#FF9101", "#FFDE59", "#7DDA58", "#5DE2E7"]}
+        arcsLength={[0.3, 0.4, 0.3]}
+        colors={["#E4080A", "#7DDA58", "#5DE2E7"]}     
         percent={value}
         arcPadding={0.00}
         textColor="#FFFFFF"
         needleColor="#FFFFFF" // Cor do ponteiro
         hideText={true}
       />
-      <div style={{ position: 'absolute', top: '10%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 1, fontSize: '14px', color: '#FFFFFF' }}> 
+      <div style={{ position: 'absolute', top: '13%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 1, fontSize: '14px', color: '#FFFFFF' }}> 
         {formattedValue}
       </div>
     </div>

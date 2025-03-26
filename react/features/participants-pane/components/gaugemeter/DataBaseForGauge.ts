@@ -23,7 +23,7 @@ class DataBaseForGauge {
       console.log("==== 0. ClearData = construtor do DataBaseForGauge chamado.");
   }
 
-  async clearData(): Promise<void> {
+  /* async clearData(): Promise<void> {
     const removerParticipantesNaoOrdenados = () => {
       const sortedParticipantIds: any = getSortedParticipantIds(DataBaseForGauge.state);
   
@@ -41,6 +41,42 @@ class DataBaseForGauge {
     } else {
       console.log('==== 1. ClearData = Nenhum participante encontrado.');
     }
+  }*/
+
+  async clearData(): Promise<void> {
+    const removerParticipantesNaoOrdenados = () => {
+      const sortedParticipantIds: any = getSortedParticipantIds(DataBaseForGauge.state);
+
+      DataBaseForGauge.participantes = DataBaseForGauge.participantes.filter(participante => {
+        const isIncluded = sortedParticipantIds.includes(participante.id);
+
+        if (!isIncluded && !participante.isOut) {
+          // Cria uma nova saída com horário em milissegundos (Date.now())
+          const saida = new Saida(
+            participante.saidas ? participante.saidas.length + 1 : 1, // sequência
+            Date.now() // horarioDeSaida em ms
+          );
+
+          participante.isOut = true;
+
+          if (!participante.saidas) {
+            participante.saidas = [];
+          }
+
+          participante.saidas.push(saida);
+        }
+
+        return isIncluded;
+      });
+
+      console.log('==== 0. ClearData = Participantes atualizados:', DataBaseForGauge.participantes);
+    };
+  
+      if (DataBaseForGauge.participantes.length > 0) {
+          removerParticipantesNaoOrdenados();
+      } else {
+          console.log('==== 1. ClearData = Nenhum participante encontrado.');
+      }
   }
   
   

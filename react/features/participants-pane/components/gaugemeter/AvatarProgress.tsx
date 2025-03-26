@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import ProgressBar from "@ramonak/react-progress-bar";
 import Participant from "./Participante";
 import dataBaseForGauge from './DataBaseForGauge';
+import CustomTooltipWithTable from './ToolTipWithTable';
 
 interface AvatarProgressChartProps {
   // database: DataBaseForGauge;
@@ -50,7 +51,7 @@ const AvatarProgress: React.FC<AvatarProgressChartProps> = ({ }) => {
             : participant.percentualAcumuloFala
         }))
       );
-    }, 11790) // intervalo de 11 segundos para a linha de progresso;
+    }, 5790) // intervalo de 11 segundos para a linha de progresso;
 
     // Certifique-se de limpar o intervalo quando não for mais necessário
     // clearInterval(interval);
@@ -63,9 +64,15 @@ const AvatarProgress: React.FC<AvatarProgressChartProps> = ({ }) => {
       {participantsProgress.map((participant) => (
         <div key={participant.id}>
           <span
-            style={{ marginRight: '10px', fontSize: '11px' }}
-            title="Nome do participante | Tempo de Fala | Tempo de Presença">
-            {participant.name} | {getFormatTime(participant.tempoDeFala)}| {getFormatTime(participant.tempoPresenca)} 
+            style={{
+              marginRight: '10px',
+              fontSize: '11px',
+              color: participant.isOut ? 'red' : 'inherit', // Vermelho se isOut=true
+              fontWeight: participant.isOut ? 'bold' : 'normal', // Opcional: negrito
+            }}
+            title="Nome do participante | Tempo de Fala | Tempo de Presença" >
+            <CustomTooltipWithTable participante={participant} />
+            {participant.name} | {getFormatTime(participant.tempoDeFala)} | {getFormatTime(participant.tempoPresenca)}
           </span>
           <ProgressBar
             completed={participant.percentualAcumuloFala.toFixed(1)}
@@ -73,7 +80,7 @@ const AvatarProgress: React.FC<AvatarProgressChartProps> = ({ }) => {
             labelAlignment="outside"
             labelColor="white"
             labelSize="11px"
-            bgColor="#ef6c00"
+            bgColor={participant.isOut ? '#ff0000' : '#ef6c00'} // Vermelho se isOut=true
           />
           <span>
             &nbsp;
