@@ -6,7 +6,7 @@ import { IParticipant } from "../../../base/participants/types";
 import { getSortedParticipantIds } from "../../functions";
 import { ISpeaker } from "../../../speaker-stats/reducer";
 import { getRoomName } from "../../../base/conference/functions";
-import { message } from "js-md5";
+import Saida from "./Saida";
 
 
 class DataBaseForGauge {
