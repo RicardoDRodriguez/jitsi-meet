@@ -3,29 +3,10 @@ import ProgressBar from "@ramonak/react-progress-bar";
 import Participant from "./Participante";
 import dataBaseForGauge from './DataBaseForGauge';
 import CustomTooltipWithTable from './ToolTipWithTable';
+import { formatTimeFromMilliseconds } from './TimeUtils';
 
 interface AvatarProgressChartProps {
   // database: DataBaseForGauge;
-}
-
-function getFormatTime(milliseconds: number): string {
-  try {
-    if (typeof milliseconds !== 'number' || isNaN(milliseconds)) {
-      throw new Error('==== 0. Participante.ts - Erro em formatar campo de minutos e segundos');
-    }
-
-    const totalSeconds = Math.floor(milliseconds / 1000);
-    const minutes = Math.floor(totalSeconds / 60);
-    const seconds = totalSeconds % 60;
-    return `${minutes}m ${seconds}s`;
-  } catch (error: unknown) { // Corrigido aqui
-    if (error instanceof Error) { 
-      console.error(error.message); 
-    } else {
-      console.error('An unexpected error occurred.');
-    }
-    return '0m 0s';
-  }
 }
 
 const AvatarProgress: React.FC<AvatarProgressChartProps> = ({ }) => {
@@ -63,6 +44,7 @@ const AvatarProgress: React.FC<AvatarProgressChartProps> = ({ }) => {
     <div>
       {participantsProgress.map((participant) => (
         <div key={participant.id}>
+          <CustomTooltipWithTable participante={participant}>
           <span
             style={{
               marginRight: '10px',
@@ -71,9 +53,9 @@ const AvatarProgress: React.FC<AvatarProgressChartProps> = ({ }) => {
               fontWeight: participant.isOut ? 'bold' : 'normal', // Opcional: negrito
             }}
             title="Nome do participante | Tempo de Fala | Tempo de Presença" >
-            <CustomTooltipWithTable participante={participant} />
-            {participant.name} | {getFormatTime(participant.tempoDeFala)} | {getFormatTime(participant.tempoPresenca)}
+            {participant.name} | {formatTimeFromMilliseconds(participant.tempoDeFala)} | {formatTimeFromMilliseconds(participant.tempoPresenca)}
           </span>
+          </CustomTooltipWithTable>
           <ProgressBar
             completed={participant.percentualAcumuloFala.toFixed(1)}
             customLabel={`${participant.percentualAcumuloFala.toFixed(1)}%`}
@@ -92,3 +74,5 @@ const AvatarProgress: React.FC<AvatarProgressChartProps> = ({ }) => {
 };
 
 export default AvatarProgress;
+
+

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { ReactElement } from 'react';
 import Tooltip from '@mui/material/Tooltip';
 import Paper from '@mui/material/Paper';
 import Table from '@mui/material/Table';
@@ -6,31 +6,50 @@ import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
 import TableRow from '@mui/material/TableRow';
-import Saida from './Saida';
+import { TableHead } from '@mui/material';
+import { calcularTempoFora, formatTimeFromMilliseconds } from './TimeUtils';
 import Participante from './Participante';
 
-const CustomTooltipWithTable = ({ participante }: { participante: Participante }) => {
+interface CustomTooltipWithTableProps {
+  participante: Participante;
+  children: ReactElement; // Alterado de ReactNode para ReactElement
+}
+const CustomTooltipWithTable = ({ participante, children }: CustomTooltipWithTableProps) => {
+  if (!participante.saidas || participante.saidas.length === 0) {
+    return <>{children}</>;
+  }
+
   return (
     <Tooltip
       title={
-        <Paper elevation={3}>
+        <Paper elevation={3} sx={{ padding: '8px' }}>
           <TableContainer>
             <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell><strong>Evento</strong></TableCell>
+                  <TableCell><strong>Horário</strong></TableCell>
+                  <TableCell><strong>Tempo Fora</strong></TableCell>
+                </TableRow>
+              </TableHead>
               <TableBody>
-                {participante.saidas?.map((saida) => (
+                {participante.saidas.map((saida) => (
                   <React.Fragment key={saida.sequencia}>
                     <TableRow>
                       <TableCell>Saída #{saida.sequencia}</TableCell>
+                      <TableCell>{formatTimeFromMilliseconds(saida.horarioDeSaida)}</TableCell>
                       <TableCell>
-                        {new Date(saida.horarioDeSaida).toLocaleTimeString()}
+                        {saida.horarioDeRetorno 
+                          ? calcularTempoFora(saida.horarioDeSaida, saida.horarioDeRetorno)
+                          : "--"
+                        }
                       </TableCell>
                     </TableRow>
                     {saida.horarioDeRetorno && (
                       <TableRow>
                         <TableCell>Retorno #{saida.sequencia}</TableCell>
-                        <TableCell>
-                          {new Date(saida.horarioDeRetorno).toLocaleTimeString()}
-                        </TableCell>
+                        <TableCell>{formatTimeFromMilliseconds(saida.horarioDeRetorno)}</TableCell>
+                        <TableCell>--</TableCell>
                       </TableRow>
                     )}
                   </React.Fragment>
@@ -41,10 +60,9 @@ const CustomTooltipWithTable = ({ participante }: { participante: Participante }
         </Paper>
       }
       arrow
-      placement="top">
-      <div style={{ padding: '8px', background: '#f0f0f0', cursor: 'pointer' }}>
-        Histórico de saídas
-      </div>
+      placement="top"
+    >
+      {children}
     </Tooltip>
   );
 };
