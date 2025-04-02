@@ -1,13 +1,17 @@
 // DataBaseForGauge.ts
 import Participante from "./Participante";
 import { IReduxState } from "../../../app/types";
-import { getParticipantById } from "../../../base/participants/functions";
-import { IParticipant } from "../../../base/participants/types";
+import { getLocalParticipant, getParticipantById } from "../../../base/participants/functions";
+import { ILocalParticipant, IParticipant } from "../../../base/participants/types";
 import { getSortedParticipantIds } from "../../functions";
 import { ISpeaker } from "../../../speaker-stats/reducer";
 import { getRoomName } from "../../../base/conference/functions";
 import Saida from "./Saida";
+import { forEach } from "lodash-es";
 
+interface IChaveDataBase {
+  nomeChave: any; // Campo obrigatório (não opcional)
+}
 
 class DataBaseForGauge {
 
@@ -23,62 +27,93 @@ class DataBaseForGauge {
       console.log("==== 0. ClearData = construtor do DataBaseForGauge chamado.");
   }
 
-  /* async clearData(): Promise<void> {
-    const removerParticipantesNaoOrdenados = () => {
-      const sortedParticipantIds: any = getSortedParticipantIds(DataBaseForGauge.state);
+
+  public getParticipantNames(): IChaveDataBase[] {
+    const sortedParticipantIds: any[] = getSortedParticipantIds(DataBaseForGauge.state);
+    const nomesChave: IChaveDataBase[] = [];
+    let chave: IChaveDataBase;
+
+    // Processa participantes remotos
+    sortedParticipantIds.forEach((id: string) => {
+        const user = APP.conference.getParticipantById(id);
+        console.log("==== 1. ClearData = Varrendo Ids", id, user);
+        if (user) {
+            nomesChave.push({
+                nomeChave: user.getDisplayName()
+            });
+        }
+    });
+
+    // Processa participante local
+    const localUser = getLocalParticipant(DataBaseForGauge.state);
+    if (localUser) {
+        nomesChave.push({
+            nomeChave: localUser.name
+        });
+    }
+    console.log("==== 3. ClearData = nomesChave",nomesChave);
+    return nomesChave;
+}
   
-      // Filtra os participantes que não estão na lista de IDs ordenados
-      DataBaseForGauge.participantes = DataBaseForGauge.participantes.filter(participante => 
-        sortedParticipantIds.includes(participante.id)
-      );
+  /**
+   * Atualiza os participantes ativando ou desativando conforme suas ações !
+   */
+
+  async clearData(): Promise<void> {
+    const atualizarStatusParticipantes = () => {
+    
+    const sortedParticipantsKey: IChaveDataBase[] = this.getParticipantNames();  
+      DataBaseForGauge.participantes.forEach(participante => {
+        
+        // Verifica se o individo está ativo
+        const isActive = sortedParticipantsKey.some(
+          (participantKey) => participantKey.nomeChave === participante.name
+        );
   
-      console.log('==== 0. ClearData = Participantes atualizados:', DataBaseForGauge.participantes);
+        // Participante ESTÁ na lista de ativos (retornou ou nunca saiu)
+        if (isActive) {
+          if (participante.isOut) {
+            // Caso 1: Participante RETORNOU (estava isOut=true e agora está ativo)
+            participante.isOut = false;
+            participante.isReturned = true;
+            participante.numberOfReturns = (participante.numberOfReturns || 0) + 1;
+  
+            // Registra o horário de retorno na última saída (se houver saídas)
+            if (participante.saidas?.length) {
+              const ultimaSaida = participante.saidas[participante.saidas.length - 1];
+              ultimaSaida.horarioDeRetorno = Date.now();
+            }
+          } else {
+            // Caso 2: Participante NUNCA SAIU (mantém isOut=false)
+            participante.isReturned = false;
+          }
+        }
+        // Participante NÃO está na lista de ativos (saiu ou já estava fora)
+        else {
+          if (!participante.isOut) {
+            // Caso 3: NOVA SAÍDA (não estava isOut=true)
+            const saida = new Saida(
+              participante.saidas ? participante.saidas.length + 1 : 1,
+              Date.now()
+            );
+            participante.isOut = true;
+            participante.isReturned = false;
+            participante.saidas = participante.saidas || [];
+            participante.saidas.push(saida);
+          }
+          // Caso 4: JÁ ESTAVA FORA (não faz nada)
+        }
+      });
+  
+      console.log('==== 0. ClearData = Status atualizado:', DataBaseForGauge.participantes);
     };
   
-    // Verifica se há participantes antes de executar a função
     if (DataBaseForGauge.participantes.length > 0) {
-      removerParticipantesNaoOrdenados();
+      atualizarStatusParticipantes();
     } else {
       console.log('==== 1. ClearData = Nenhum participante encontrado.');
     }
-  }*/
-
-  async clearData(): Promise<void> {
-    const removerParticipantesNaoOrdenados = () => {
-      const sortedParticipantIds: any = getSortedParticipantIds(DataBaseForGauge.state);
-
-      DataBaseForGauge.participantes = DataBaseForGauge.participantes.filter(participante => {
-        const isIncluded = sortedParticipantIds.includes(participante.id);
-
-        if (!isIncluded && !participante.isOut) {
-          // Cria uma nova saída com horário em milissegundos (Date.now())
-          const saida = new Saida(
-            participante.saidas ? participante.saidas.length + 1 : 1, // sequência
-            Date.now() // horarioDeSaida em ms
-          );
-
-          participante.isOut = true;
-
-          if (!participante.saidas) {
-            participante.saidas = [];
-          }
-
-          participante.saidas.push(saida);
-        }
-
-        return isIncluded;
-      });
-
-      console.log('==== 0. ClearData = Participantes atualizados:', DataBaseForGauge.participantes);
-    };
-  
-      if (DataBaseForGauge.participantes.length > 0) {
-          removerParticipantesNaoOrdenados();
-      } else {
-          console.log('==== 1. ClearData = Nenhum participante encontrado.');
-      }
   }
-  
   
 
   async percorrerParticipantes(): Promise<void> {
@@ -387,14 +422,9 @@ class DataBaseForGauge {
 
     const now = new Date().getTime()
 
-    const atualizarParticipante = (participante:Participante, stats:ISpeaker, partic:IParticipant, now:number) => {
+    const atualizarParticipante = (participante:Participante, stats:ISpeaker, now:number) => {
       participante.tempoDeFala = stats.getTotalDominantSpeakerTime() ?? participante.tempoDeFala;
       participante.tempoPresenca = now - participante.entradaNaSala;
-      participante.avatarURL = partic.avatarURL ?? participante.avatarURL;
-      participante.displayName = partic.displayName ?? participante.displayName;
-      participante.name = partic.name ?? participante.name;
-      participante.role = partic.role ?? participante.role;
-      participante.dominantSpeaker = partic.dominantSpeaker ?? participante.dominantSpeaker;
       participante.fatorTempoPresenca = 0;
       participante.fatorAcumuladoCurvaLorenz = 0;
       console.log(`==== 5.1. processarParticipante  --> participante ${participante.id}, participante.fatorDePresença ${participante.fatorTempoPresenca}: `);
@@ -434,7 +464,15 @@ class DataBaseForGauge {
     if (partic) {
       const speakerStats = DataBaseForGauge.conference.getSpeakerStats();
       const now = new Date().getTime();
-      const existingParticipant = DataBaseForGauge.participantes.find(p => p.id === key);
+      const sortedParticipantsKey: IChaveDataBase[] = this.getParticipantNames();  
+      // Verifica se o individo existe
+      const existingParticipant = DataBaseForGauge.participantes.find(
+        (participante) => {
+            return sortedParticipantsKey.some(
+                (participantKey) => participantKey.nomeChave === participante.name
+            );
+        }
+    );
       for (const userId in speakerStats) {
         if (userId === key) {
           console.log(`==== 4. processarParticipante --> encontrei em SpeakerStats ${key}: `, speakerStats);
@@ -442,7 +480,7 @@ class DataBaseForGauge {
           console.log(`==== 5. processarParticipante --> encontrei em stats ${key}: `, stats);
           if (existingParticipant) {
             //Atualizar dados de participante
-            atualizarParticipante(existingParticipant, stats, partic, now);
+            atualizarParticipante(existingParticipant, stats,  now);
           }
           else {
             const participante: Participante = new Participante(key, room);

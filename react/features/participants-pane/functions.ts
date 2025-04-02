@@ -234,6 +234,7 @@ export function getSortedParticipantIds(stateful: IStateful) {
     ];
 }
 
+
 /**
  * Checks if a participant matches the search string.
  *

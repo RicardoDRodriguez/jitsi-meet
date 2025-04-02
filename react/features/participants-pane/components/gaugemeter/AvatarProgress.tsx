@@ -62,6 +62,8 @@ const AvatarProgress: React.FC<AvatarProgressChartProps> = ({ }) => {
             labelAlignment="outside"
             labelColor="white"
             labelSize="11px"
+            width="100%"
+            height="20px"
             bgColor={participant.isOut ? '#ff0000' : '#ef6c00'} // Vermelho se isOut=true
           />
           <span>
