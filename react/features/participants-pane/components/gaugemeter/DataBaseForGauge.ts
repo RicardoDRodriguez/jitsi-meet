@@ -422,7 +422,8 @@ class DataBaseForGauge {
 
     const now = new Date().getTime()
 
-    const atualizarParticipante = (participante:Participante, stats:ISpeaker, now:number) => {
+    const atualizarParticipante = (idkey:any, participante:Participante, stats:ISpeaker, now:number) => {
+      participante.id = idkey;
       participante.tempoDeFala = stats.getTotalDominantSpeakerTime() ?? participante.tempoDeFala;
       participante.tempoPresenca = now - participante.entradaNaSala;
       participante.fatorTempoPresenca = 0;
@@ -442,6 +443,7 @@ class DataBaseForGauge {
       
       const novoParticipante = {
         ...participante,
+        id:partic.id,
         tempoDeFala: stats.getTotalDominantSpeakerTime() ?? participante.tempoDeFala,
         entradaNaSala: partic.userStartTime ?? user.userStartTime,
         tempoPresenca: 0,
@@ -480,7 +482,7 @@ class DataBaseForGauge {
           console.log(`==== 5. processarParticipante --> encontrei em stats ${key}: `, stats);
           if (existingParticipant) {
             //Atualizar dados de participante
-            atualizarParticipante(existingParticipant, stats,  now);
+            atualizarParticipante(key, existingParticipant, stats,  now);
           }
           else {
             const participante: Participante = new Participante(key, room);
