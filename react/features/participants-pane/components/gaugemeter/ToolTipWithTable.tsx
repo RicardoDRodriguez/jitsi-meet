@@ -37,7 +37,7 @@ const CustomTooltipWithTable = ({ participante, children }: CustomTooltipWithTab
                   <React.Fragment key={saida.sequencia}>
                     <TableRow>
                       <TableCell>Saída #{saida.sequencia}</TableCell>
-                      <TableCell>{formatTimeFromMilliseconds(saida.horarioDeSaida)}</TableCell>
+                      <TableCell>{formatTimeFromMilliseconds(saida.horaSaida)}</TableCell>
                       <TableCell>
                         {saida.horarioDeRetorno 
                           ? calcularTempoFora(saida.horarioDeSaida, saida.horarioDeRetorno)
@@ -48,7 +48,7 @@ const CustomTooltipWithTable = ({ participante, children }: CustomTooltipWithTab
                     {saida.horarioDeRetorno && (
                       <TableRow>
                         <TableCell>Retorno #{saida.sequencia}</TableCell>
-                        <TableCell>{formatTimeFromMilliseconds(saida.horarioDeRetorno)}</TableCell>
+                        <TableCell>{formatTimeFromMilliseconds(saida.horaRetorno)}</TableCell>
                         <TableCell>--</TableCell>
                       </TableRow>
                     )}

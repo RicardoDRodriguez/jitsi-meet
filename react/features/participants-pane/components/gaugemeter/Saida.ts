@@ -22,13 +22,18 @@ class Saida {
   private _sequencia: number = 0;
   private _horarioDeSaida: number = 0;
   private _horarioDeRetorno: number = 0;
+  private _horaSaida: string;
+  private _horaRetorno: string;
 
   constructor(
     sequencia: number = 0,
     horarioDeSaida: number = 0,
+    horaSaida:string='--'
   ) {
     this._sequencia = sequencia;
     this._horarioDeSaida = horarioDeSaida;
+    this._horarioDeRetorno = 0;
+    this._horaSaida = horaSaida;
   }
 
   // Métodos get e set para o campo 'sequencia'
@@ -40,6 +45,23 @@ class Saida {
     this._sequencia = value;
   }
 
+  // Métodos get e set para o campo 'horaSaida'
+  get horaSaida(): string {
+    return this._horaSaida;
+  }
+
+  set horaSaida(value: string) {
+    this._horaSaida = value;
+  }
+
+  // Métodos get e set para o campo 'horaRetorno'
+  get horaRetorno(): string {
+    return this._horaRetorno;
+  }
+
+  set horaRetorno(value: string) {
+    this._horaRetorno = value;
+  }
   // Métodos get e set para o campo 'horarioDeSaida'
   get horarioDeSaida(): number {
     return this._horarioDeSaida;

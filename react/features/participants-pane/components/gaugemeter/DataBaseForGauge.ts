@@ -8,6 +8,7 @@ import { ISpeaker } from "../../../speaker-stats/reducer";
 import { getRoomName } from "../../../base/conference/functions";
 import Saida from "./Saida";
 import { forEach } from "lodash-es";
+import { getHorarioAtual } from "./TimeUtils";
 
 interface IChaveDataBase {
   key: any;        // Chave do campo
@@ -83,8 +84,8 @@ class DataBaseForGauge {
   
             // Registra o horário de retorno na última saída (se houver saídas)
             if (participante.saidas?.length) {
-              const ultimaSaida = participante.saidas[participante.saidas.length - 1];
-              ultimaSaida.horarioDeRetorno = Date.now();
+              participante.saidas[participante.saidas.length - 1].horarioDeRetorno = Date.now();
+              participante.saidas[participante.saidas.length - 1].horaRetorno = getHorarioAtual();
             }
           } else {
             // Caso 2: Participante NUNCA SAIU (mantém isOut=false)
@@ -97,7 +98,7 @@ class DataBaseForGauge {
             // Caso 3: NOVA SAÍDA (não estava isOut=true)
             const saida = new Saida(
               participante.saidas ? participante.saidas.length + 1 : 1,
-              Date.now()
+              Date.now(), getHorarioAtual()
             );
             participante.isOut = true;
             participante.isReturned = false;

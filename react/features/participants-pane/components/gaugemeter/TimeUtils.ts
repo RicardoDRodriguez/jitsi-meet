@@ -28,6 +28,20 @@ export function formatTimeFromMilliseconds(milliseconds: number): string {
         return "0h 0m 0s";
     }
 }
+/**
+ * Retorna no formato String a hora minuto e segundo
+ * @returns HHh MNm SSs
+ */
+export function getHorarioAtual(): string {
+    const data = new Date();
+    const horas = data.getHours().toString().padStart(2, '0');
+    const minutos = data.getMinutes().toString().padStart(2, '0');
+    const segundos = data.getSeconds().toString().padStart(2, '0');
+    
+    return `${horas}h ${minutos}m ${segundos}s`;
+}
+
+
  /**
  * Calcula o tempo fora do participante recebendo dois parâmetros
  * @param saida - Timestamp de saída do participante em milissegundos
