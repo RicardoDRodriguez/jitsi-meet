@@ -35,6 +35,7 @@ class Saida {
     this._horarioDeSaida = horarioDeSaida;
     this._horarioDeRetorno = 0;
     this._horaSaida = horaSaida;
+    this._horaRetorno = horaRetorno;
   }
 
   // Métodos get e set para o campo 'sequencia'
