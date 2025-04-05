@@ -27,8 +27,8 @@ const CustomTooltipWithTable = ({ participante, children }: CustomTooltipWithTab
             <Table size="small">
               <TableHead>
                 <TableRow>
-                  <TableCell><strong>Evento</strong></TableCell>
-                  <TableCell><strong>Horário</strong></TableCell>
+                  <TableCell><strong>Saida</strong></TableCell>
+                  <TableCell><strong>Retorno</strong></TableCell>
                   <TableCell><strong>Tempo Fora</strong></TableCell>
                 </TableRow>
               </TableHead>
@@ -36,8 +36,8 @@ const CustomTooltipWithTable = ({ participante, children }: CustomTooltipWithTab
                 {participante.saidas.map((saida) => (
                   <React.Fragment key={saida.sequencia}>
                     <TableRow>
-                      <TableCell>Saída #{saida.sequencia}</TableCell>
-                      <TableCell>{formatTimeFromMilliseconds(saida.horaSaida)}</TableCell>
+                      <TableCell>{saida.horaSaida}</TableCell>
+                      <TableCell>{saida.horaRetorno}</TableCell>
                       <TableCell>
                         {saida.horarioDeRetorno 
                           ? calcularTempoFora(saida.horarioDeSaida, saida.horarioDeRetorno)
@@ -45,13 +45,6 @@ const CustomTooltipWithTable = ({ participante, children }: CustomTooltipWithTab
                         }
                       </TableCell>
                     </TableRow>
-                    {saida.horarioDeRetorno && (
-                      <TableRow>
-                        <TableCell>Retorno #{saida.sequencia}</TableCell>
-                        <TableCell>{formatTimeFromMilliseconds(saida.horaRetorno)}</TableCell>
-                        <TableCell>--</TableCell>
-                      </TableRow>
-                    )}
                   </React.Fragment>
                 ))}
               </TableBody>

@@ -28,7 +28,8 @@ class Saida {
   constructor(
     sequencia: number = 0,
     horarioDeSaida: number = 0,
-    horaSaida:string='--'
+    horaSaida:string='--',
+    horaRetorno:string='--'
   ) {
     this._sequencia = sequencia;
     this._horarioDeSaida = horarioDeSaida;

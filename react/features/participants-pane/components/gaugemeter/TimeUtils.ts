@@ -16,16 +16,27 @@ export function formatTimeFromMilliseconds(milliseconds: number): string {
         const minutos = Math.floor((milliseconds % (1000 * 60 * 60)) / (1000 * 60));
         const segundos = Math.floor((milliseconds % (1000 * 60)) / 1000);
 
-        console.log(' FormatTimeFromMilliseconds millisegundos:',milliseconds);
-        console.log(' FormatTimeFromMilliseconds horas:',horas);
-        console.log(' FormatTimeFromMilliseconds minutos:',minutos);
-        console.log(' FormatTimeFromMilliseconds segundos:',segundos);
+        console.log('FormatTimeFromMilliseconds millisegundos:', milliseconds);
+        console.log('FormatTimeFromMilliseconds horas:', horas);
+        console.log('FormatTimeFromMilliseconds minutos:', minutos);
+        console.log('FormatTimeFromMilliseconds segundos:', segundos);
 
-        // Formata sempre com horas, minutos e segundos
-        return `${horas}h ${minutos}m ${segundos}s`;
+        // Cria um array com as partes não-zero
+        const partes:any = [];
+        if (horas > 0) partes.push(`${horas}h`);
+        if (minutos > 0) partes.push(`${minutos}m`);
+        if (segundos > 0) partes.push(`${segundos}s`);
+
+        // Se todas as partes forem zero, retorna "0s"
+        if (partes.length === 0) {
+            return "0s";
+        }
+
+        // Junta as partes com espaços
+        return partes.join(' ');
     } catch (error) {
         console.error('Erro ao formatar tempo:', error instanceof Error ? error.message : error);
-        return "0h 0m 0s";
+        return "0s";
     }
 }
 /**
