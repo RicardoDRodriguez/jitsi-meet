@@ -12,12 +12,12 @@ export class NameValidator {
     public static getInstance(): NameValidator {
         if (!NameValidator.instance) {
             NameValidator.instance = new NameValidator();
-            console.log('NomeValidator getInstance inicializado')
+            console.log('NomeValidator getInstance inicializado');
         }
         return NameValidator.instance;
     }
 
-    public checkDuplicate(newName: string, currentUserId?: string): string | null {
+    checkDuplicate(newName: string, currentUserId?: string): string | null {
         const names = Array.from(this.participants.values())
             .filter(name => name !== null) as string[];
 
@@ -44,7 +44,7 @@ export class NameValidator {
         return null;
     }
 
-    public updateParticipant(id: string, displayName: string | null): void {
+    updateParticipant(id: string, displayName: string | null): void {
         if (displayName) {
             this.participants.set(id, displayName);
         } else {
