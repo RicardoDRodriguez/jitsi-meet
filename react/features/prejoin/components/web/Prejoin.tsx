@@ -9,7 +9,7 @@ import Avatar from '../../../base/avatar/components/Avatar';
 import { isNameReadOnly } from '../../../base/config/functions.web';
 import { IconArrowDown, IconArrowUp, IconPhoneRinging, IconVolumeOff } from '../../../base/icons/svg';
 import { isVideoMutedByUser } from '../../../base/media/functions';
-import { getLocalParticipant } from '../../../base/participants/functions';
+import { getLocalParticipant, getRemoteParticipants } from '../../../base/participants/functions';
 import Popover from '../../../base/popover/components/Popover.web';
 import ActionButton from '../../../base/premeeting/components/web/ActionButton';
 import PreMeetingScreen from '../../../base/premeeting/components/web/PreMeetingScreen';
@@ -136,6 +136,12 @@ interface IProps {
      * The JitsiLocalTrack to display.
      */
     videoTrack?: Object;
+
+    /**
+     * Array de participantes
+     */
+    participants: Array<{ name?: string; displayName?: string;  _displayName?: string; }>;
+
 }
 
 const useStyles = makeStyles()(theme => {
@@ -219,6 +225,7 @@ const Prejoin = ({
     joiningInProgress,
     name,
     participantId,
+    participants,
     prejoinConfig,
     readOnlyName,
     setJoinByPhoneDialogVisiblity,
@@ -233,11 +240,11 @@ const Prejoin = ({
 }: IProps) => {
     const showDisplayNameField = useMemo(
         () => isDisplayNameVisible && !readOnlyName,
-        [ isDisplayNameVisible, readOnlyName ]);
+        [isDisplayNameVisible, readOnlyName]);
     const showErrorOnField = useMemo(
         () => showDisplayNameField && showErrorOnJoin,
-        [ showDisplayNameField, showErrorOnJoin ]);
-    const [ showJoinByPhoneButtons, setShowJoinByPhoneButtons ] = useState(false);
+        [showDisplayNameField, showErrorOnJoin]);
+    const [showJoinByPhoneButtons, setShowJoinByPhoneButtons] = useState(false);
     const { classes } = useStyles();
     const { t } = useTranslation();
     const dispatch = useDispatch();
@@ -257,8 +264,23 @@ const Prejoin = ({
 
             return;
         }
+        const normalizedNewName = name.trim().toLowerCase();
+        
+        if (participants.length === 0){
+            return;
+        }
+        
+        const isNameDuplicate = participants.some((p: { name?: string; displayName?: string }) => {
+            const participantName = [p.name, p.displayName].find(Boolean) || '';
+            return Boolean(participantName) && 
+                   participantName.trim().toLowerCase() === normalizedNewName.trim().toLowerCase();
+        });
 
-        logger.info('Prejoin join button clicked.');
+        if (isNameDuplicate) {
+            logger.error ('Prejoin OnJoinButtonClick nome do participante duplicado');
+            logger.error("Prejoin participantes",participants)
+            return;
+        }
 
         joinConference();
     };
@@ -404,73 +426,73 @@ const Prejoin = ({
 
     return (
         <PreMeetingScreen
-            showDeviceStatus = { deviceStatusVisible }
-            showRecordingWarning = { showRecordingWarning }
-            showUnsafeRoomWarning = { showUnsafeRoomWarning }
-            title = { t('prejoin.joinMeeting') }
-            videoMuted = { !showCameraPreview }
-            videoTrack = { videoTrack }>
+            showDeviceStatus={deviceStatusVisible}
+            showRecordingWarning={showRecordingWarning}
+            showUnsafeRoomWarning={showUnsafeRoomWarning}
+            title={t('prejoin.joinMeeting')}
+            videoMuted={!showCameraPreview}
+            videoTrack={videoTrack}>
             <div
-                className = { classes.inputContainer }
-                data-testid = 'prejoin.screen'>
+                className={classes.inputContainer}
+                data-testid='prejoin.screen'>
                 {showDisplayNameField ? (<Input
-                    accessibilityLabel = { t('dialog.enterDisplayName') }
-                    autoComplete = { 'name' }
-                    autoFocus = { true }
-                    className = { classes.input }
-                    error = { showErrorOnField }
-                    id = 'premeeting-name-input'
-                    onChange = { setName }
-                    onKeyPress = { showUnsafeRoomWarning && !unsafeRoomConsent ? undefined : onInputKeyPress }
-                    placeholder = { t('dialog.enterDisplayName') }
-                    readOnly = { readOnlyName }
-                    value = { name } />
+                    accessibilityLabel={t('dialog.enterDisplayName')}
+                    autoComplete={'name'}
+                    autoFocus={true}
+                    className={classes.input}
+                    error={showErrorOnField}
+                    id='premeeting-name-input'
+                    onChange={setName}
+                    onKeyPress={showUnsafeRoomWarning && !unsafeRoomConsent ? undefined : onInputKeyPress}
+                    placeholder={t('dialog.enterDisplayName')}
+                    readOnly={readOnlyName}
+                    value={name} />
                 ) : (
-                    <div className = { classes.avatarContainer }>
+                    <div className={classes.avatarContainer}>
                         <Avatar
-                            className = { classes.avatar }
-                            displayName = { name }
-                            participantId = { participantId }
-                            size = { 72 } />
-                        {isDisplayNameVisible && <div className = { classes.avatarName }>{name}</div>}
+                            className={classes.avatar}
+                            displayName={name}
+                            participantId={participantId}
+                            size={72} />
+                        {isDisplayNameVisible && <div className={classes.avatarName}>{name}</div>}
                     </div>
                 )}
 
                 {showErrorOnField && <div
-                    className = { classes.error }
-                    data-testid = 'prejoin.errorMessage'>{t('prejoin.errorMissingName')}</div>}
+                    className={classes.error}
+                    data-testid='prejoin.errorMessage'>{t('prejoin.errorMissingName')}</div>}
 
-                <div className = { classes.dropdownContainer }>
+                <div className={classes.dropdownContainer}>
                     <Popover
-                        content = { hasExtraJoinButtons && <div className = { classes.dropdownButtons }>
+                        content={hasExtraJoinButtons && <div className={classes.dropdownButtons}>
                             {extraButtonsToRender.map(({ key, ...rest }) => (
                                 <Button
-                                    disabled = { joiningInProgress || showErrorOnField }
-                                    fullWidth = { true }
-                                    key = { key }
-                                    type = { BUTTON_TYPES.SECONDARY }
-                                    { ...rest } />
+                                    disabled={joiningInProgress || showErrorOnField}
+                                    fullWidth={true}
+                                    key={key}
+                                    type={BUTTON_TYPES.SECONDARY}
+                                    {...rest} />
                             ))}
-                        </div> }
-                        onPopoverClose = { onDropdownClose }
-                        position = 'bottom'
-                        trigger = 'click'
-                        visible = { showJoinByPhoneButtons }>
+                        </div>}
+                        onPopoverClose={onDropdownClose}
+                        position='bottom'
+                        trigger='click'
+                        visible={showJoinByPhoneButtons}>
                         <ActionButton
-                            OptionsIcon = { showJoinByPhoneButtons ? IconArrowUp : IconArrowDown }
-                            ariaDropDownLabel = { t('prejoin.joinWithoutAudio') }
-                            ariaLabel = { t('prejoin.joinMeeting') }
-                            ariaPressed = { showJoinByPhoneButtons }
-                            disabled = { joiningInProgress
+                            OptionsIcon={showJoinByPhoneButtons ? IconArrowUp : IconArrowDown}
+                            ariaDropDownLabel={t('prejoin.joinWithoutAudio')}
+                            ariaLabel={t('prejoin.joinMeeting')}
+                            ariaPressed={showJoinByPhoneButtons}
+                            disabled={joiningInProgress
                                 || (showUnsafeRoomWarning && !unsafeRoomConsent)
-                                || showErrorOnField }
-                            hasOptions = { hasExtraJoinButtons }
-                            onClick = { onJoinButtonClick }
-                            onOptionsClick = { onOptionsClick }
-                            role = 'button'
-                            tabIndex = { 0 }
-                            testId = 'prejoin.joinMeeting'
-                            type = 'primary'>
+                                || showErrorOnField}
+                            hasOptions={hasExtraJoinButtons}
+                            onClick={onJoinButtonClick}
+                            onOptionsClick={onOptionsClick}
+                            role='button'
+                            tabIndex={0}
+                            testId='prejoin.joinMeeting'
+                            type='primary'>
                             {t('prejoin.joinMeeting')}
                         </ActionButton>
                     </Popover>
@@ -478,8 +500,8 @@ const Prejoin = ({
             </div>
             {showDialog && (
                 <JoinByPhoneDialog
-                    joinConferenceWithoutAudio = { joinConferenceWithoutAudio }
-                    onClose = { closeDialog } />
+                    joinConferenceWithoutAudio={joinConferenceWithoutAudio}
+                    onClose={closeDialog} />
             )}
         </PreMeetingScreen>
     );
@@ -500,6 +522,10 @@ function mapStateToProps(state: IReduxState) {
     const { room } = state['features/base/conference'];
     const { unsafeRoomConsent } = state['features/base/premeeting'];
     const { showPrejoinWarning: showRecordingWarning } = state['features/base/config'].recordings ?? {};
+    // Criada a lista de participantes remotos
+    const remoteParticipants = Array.from(getRemoteParticipants(state).values());
+    const localParticipant = getLocalParticipant(state);
+    const participants = localParticipant ? [...remoteParticipants, localParticipant] : remoteParticipants;
 
     return {
         deviceStatusVisible: isDeviceStatusVisible(state),
@@ -508,6 +534,7 @@ function mapStateToProps(state: IReduxState) {
         joiningInProgress,
         name,
         participantId,
+        participants, // Lista de participantes remotos
         prejoinConfig: state['features/base/config'].prejoinConfig,
         readOnlyName: isNameReadOnly(state),
         showCameraPreview: !isVideoMutedByUser(state),

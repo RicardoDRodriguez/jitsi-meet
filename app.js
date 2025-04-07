@@ -35,6 +35,7 @@ window.APP = {
     UI
 };
 
+
 // TODO The execution of the mobile app starts from react/index.native.js.
 // Similarly, the execution of the Web app should start from react/index.web.js
 // for the sake of consistency and ease of understanding. Temporarily though

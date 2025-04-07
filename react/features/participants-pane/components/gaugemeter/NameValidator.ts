@@ -52,3 +52,6 @@ export class NameValidator {
         }
     }
 }
+
+const nameValidator = NameValidator.getInstance();
+

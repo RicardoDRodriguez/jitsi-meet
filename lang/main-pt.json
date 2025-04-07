@@ -918,10 +918,12 @@
         "calling": "A chamar",
         "configuringDevices": "A configurar os dispositivos…",
         "connectedWithAudioQ": "Está ligado com áudio?",
+        "errorDuplicateName": "Este nome já está em uso. Por favor, escolha outro.",
         "connection": {
             "good": "A sua ligação à Internet parece boa!",
             "nonOptimal": "A sua ligação à Internet não é óptima",
             "poor": "Tem uma má ligação à Internet"
+        
         },
         "connectionDetails": {
             "audioClipping": "Prevemos que o seu áudio tenha cortes.",
