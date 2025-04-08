@@ -273,7 +273,7 @@ const Prejoin = ({
         const normalizedNewName = name.trim().toLowerCase();
         
         showErrorDuplicateName = false;
-        
+
         if (participants.length === 0){
             return;
         }
@@ -529,20 +529,18 @@ const Prejoin = ({
 function mapStateToProps(state: IReduxState) {
     const name = getDisplayName(state);
     const showErrorOnJoin = isDisplayNameRequired(state) && !name;
-    const showErrorDuplicateName = true;
+    const showErrorDuplicateName = false;
     const { id: participantId } = getLocalParticipant(state) ?? {};
     const { joiningInProgress } = state['features/prejoin'];
     const { room } = state['features/base/conference'];
     const { unsafeRoomConsent } = state['features/base/premeeting'];
     const { showPrejoinWarning: showRecordingWarning } = state['features/base/config'].recordings ?? {};
-    // Criada a lista de participantes remotos
-
-    //const localParticipant = getLocalParticipant(state);
-    //const participants = localParticipant ? [...remoteParticipants, localParticipant] : remoteParticipants;
-
+    
+    // Criada a lista de participantes 
     const remoteParticipants = Array.from(getRemoteParticipants(state).values());
-    const participants =  remoteParticipants;
-
+    const localParticipant = getLocalParticipant(state);
+    const participants = localParticipant ? [...remoteParticipants, localParticipant] : remoteParticipants;
+   
     return {
         deviceStatusVisible: isDeviceStatusVisible(state),
         hasJoinByPhoneButton: isJoinByPhoneButtonVisible(state),
