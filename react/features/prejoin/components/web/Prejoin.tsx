@@ -113,11 +113,6 @@ interface IProps {
     showErrorOnJoin: boolean;
 
     /**
-     * If should show an error when joining with a name of other participant.
-     */
-    showErrorDuplicateName: boolean;
-
-    /**
      * If the recording warning is visible or not.
      */
     showRecordingWarning: boolean;
@@ -145,7 +140,7 @@ interface IProps {
     /**
      * Array de participantes
      */
-    participants: Array<{ name?: string; displayName?: string;  _displayName?: string; }>;
+    participants: Array<{ id?: string, name?: string; displayName?: string; _displayName?: string; }>;
 
 }
 
@@ -237,13 +232,13 @@ const Prejoin = ({
     showCameraPreview,
     showDialog,
     showErrorOnJoin,
-    showErrorDuplicateName,
     showRecordingWarning,
     showUnsafeRoomWarning,
     unsafeRoomConsent,
     updateSettings: dispatchUpdateSettings,
     videoTrack
 }: IProps) => {
+    const [duplicateNameError, setDuplicateNameError] = useState(false);
     const showDisplayNameField = useMemo(
         () => isDisplayNameVisible && !readOnlyName,
         [isDisplayNameVisible, readOnlyName]);
@@ -261,36 +256,71 @@ const Prejoin = ({
      * @param {Object} e - The synthetic event.
      * @returns {void}
      */
-    const onJoinButtonClick = () => {
+    const onJoinButtonClick = (){
         if (showErrorOnJoin) {
             dispatch(openDisplayNamePrompt({
                 onPostSubmit: joinConference,
                 validateInput: hasDisplayName
             }));
-
             return;
         }
+
         const normalizedNewName = name.trim().toLowerCase();
-        
-        showErrorDuplicateName = false;
+        const currentUserId = participantId; // ID do participante atual
 
-        if (participants.length === 0){
-            return;
-        }
-       
-        showErrorDuplicateName = participants.some((p: { name?: string; displayName?: string }) => {
-            const participantName = [p.name, p.displayName].find(Boolean) || '';
-            return Boolean(participantName) && 
-                   participantName.trim().toLowerCase() === normalizedNewName.trim().toLowerCase();
+        console.log('Prejoin: Participantes na sala:', {
+            participantes: participants,
+            currentUser: {
+                id: participantId,
+                name: name
+            }
         });
 
-        if ( showErrorDuplicateName ) {
-            logger.error ('Prejoin OnJoinButtonClick nome do participante duplicado');
-            logger.error("Prejoin participantes",participants)
+        participants.forEach(p => {
+            console.log('Prejoin: Estrutura do participante:', {
+                id: p.id,
+                name: p.name,
+                displayName: p.displayName,
+                _displayName: p._displayName,
+                todasProps: Object.keys(p)
+            });
+        });
+
+        // Verificação robusta que ignora o usuário atual
+        const isDuplicate = participants.some(p => {
+            // Ignora o participante atual comparando IDs
+            if (currentUserId && p.id === currentUserId) {
+                return false;
+            }
+
+            // Obtém o nome do participante de todas as fontes possíveis
+            const participantName = (
+                p.name ||
+                p.displayName ||
+                p._displayName ||
+                ''
+            ).trim().toLowerCase();
+
+            return participantName && participantName === normalizedNewName;
+        });
+
+        if (isDuplicate) {
+            setDuplicateNameError(true);
+            logger.error('Prejoin: Nome duplicado detectado', {
+                nomeTentativa: name,
+                participantesExistentes: participants.map(p => ({
+                    id: p.id,
+                    nome: p.name,
+                    displayName: p.displayName
+                }))
+            });
             return;
         }
 
+        setDuplicateNameError(false);
+
         joinConference();
+        return
     };
 
     /**
@@ -470,9 +500,11 @@ const Prejoin = ({
                     className={classes.error}
                     data-testid='prejoin.errorMessage'>{t('prejoin.errorMissingName')}</div>}
 
-                {showErrorDuplicateName && <div
-                    className={classes.error}
-                    data-testid='prejoin.errorDuplicateName'>{t('prejoin.errorDuplicateName')}</div>}
+                {duplicateNameError && (
+                    <div className={classes.error} data-testid='prejoin.errorDuplicateName'>
+                        {t('prejoin.errorDuplicateName')}
+                    </div>
+                )}
 
                 <div className={classes.dropdownContainer}>
                     <Popover
@@ -529,18 +561,17 @@ const Prejoin = ({
 function mapStateToProps(state: IReduxState) {
     const name = getDisplayName(state);
     const showErrorOnJoin = isDisplayNameRequired(state) && !name;
-    const showErrorDuplicateName = false;
     const { id: participantId } = getLocalParticipant(state) ?? {};
     const { joiningInProgress } = state['features/prejoin'];
     const { room } = state['features/base/conference'];
     const { unsafeRoomConsent } = state['features/base/premeeting'];
     const { showPrejoinWarning: showRecordingWarning } = state['features/base/config'].recordings ?? {};
-    
+
     // Criada a lista de participantes 
     const remoteParticipants = Array.from(getRemoteParticipants(state).values());
     const localParticipant = getLocalParticipant(state);
     const participants = localParticipant ? [...remoteParticipants, localParticipant] : remoteParticipants;
-   
+
     return {
         deviceStatusVisible: isDeviceStatusVisible(state),
         hasJoinByPhoneButton: isJoinByPhoneButtonVisible(state),
@@ -554,7 +585,6 @@ function mapStateToProps(state: IReduxState) {
         showCameraPreview: !isVideoMutedByUser(state),
         showDialog: isJoinByPhoneDialogVisible(state),
         showErrorOnJoin,
-        showErrorDuplicateName,
         showRecordingWarning: Boolean(showRecordingWarning),
         showUnsafeRoomWarning: isInsecureRoomName(room) && isUnsafeRoomWarningEnabled(state),
         unsafeRoomConsent,
