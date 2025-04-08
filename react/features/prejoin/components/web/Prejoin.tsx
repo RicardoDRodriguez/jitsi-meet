@@ -471,7 +471,7 @@ const Prejoin = ({
 
                 {showErrorDuplicateName && <div
                     className={classes.error}
-                    data-testid='prejoin.errorDuplicateName'>{t('prejoin.errorMissingName')}</div>}
+                    data-testid='prejoin.errorDuplicateName'>{t('prejoin.errorDuplicateName')}</div>}
 
                 <div className={classes.dropdownContainer}>
                     <Popover
