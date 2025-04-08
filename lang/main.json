@@ -959,6 +959,7 @@
         "errorDialOutFailed": "Could not dial out. Call failed",
         "errorDialOutStatus": "Error getting dial out status",
         "errorMissingName": "Please enter your name to join the meeting",
+        "errorDuplicateName": "This name is in use. Please choose another one",
         "errorNoPermissions": "You need to enable microphone and camera access",
         "errorStatusCode": "Error dialing out, status code: {{status}}",
         "errorValidation": "Number validation failed",

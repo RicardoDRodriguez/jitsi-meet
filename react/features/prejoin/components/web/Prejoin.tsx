@@ -113,6 +113,11 @@ interface IProps {
     showErrorOnJoin: boolean;
 
     /**
+     * If should show an error when joining with a name of other participant.
+     */
+    showErrorDuplicateName: boolean;
+
+    /**
      * If the recording warning is visible or not.
      */
     showRecordingWarning: boolean;
@@ -232,6 +237,7 @@ const Prejoin = ({
     showCameraPreview,
     showDialog,
     showErrorOnJoin,
+    showErrorDuplicateName,
     showRecordingWarning,
     showUnsafeRoomWarning,
     unsafeRoomConsent,
@@ -269,7 +275,7 @@ const Prejoin = ({
         if (participants.length === 0){
             return;
         }
-        
+        showErrorDuplicateName = false;
         const isNameDuplicate = participants.some((p: { name?: string; displayName?: string }) => {
             const participantName = [p.name, p.displayName].find(Boolean) || '';
             return Boolean(participantName) && 
@@ -279,6 +285,7 @@ const Prejoin = ({
         if (isNameDuplicate) {
             logger.error ('Prejoin OnJoinButtonClick nome do participante duplicado');
             logger.error("Prejoin participantes",participants)
+            showErrorDuplicateName = true;
             return;
         }
 
@@ -462,6 +469,10 @@ const Prejoin = ({
                     className={classes.error}
                     data-testid='prejoin.errorMessage'>{t('prejoin.errorMissingName')}</div>}
 
+                {showErrorDuplicateName && <div
+                    className={classes.error}
+                    data-testid='prejoin.errorDuplicateName'>{t('prejoin.errorMissingName')}</div>}
+
                 <div className={classes.dropdownContainer}>
                     <Popover
                         content={hasExtraJoinButtons && <div className={classes.dropdownButtons}>
@@ -517,15 +528,19 @@ const Prejoin = ({
 function mapStateToProps(state: IReduxState) {
     const name = getDisplayName(state);
     const showErrorOnJoin = isDisplayNameRequired(state) && !name;
+    const showErrorDuplicateName = true;
     const { id: participantId } = getLocalParticipant(state) ?? {};
     const { joiningInProgress } = state['features/prejoin'];
     const { room } = state['features/base/conference'];
     const { unsafeRoomConsent } = state['features/base/premeeting'];
     const { showPrejoinWarning: showRecordingWarning } = state['features/base/config'].recordings ?? {};
     // Criada a lista de participantes remotos
+
+    //const localParticipant = getLocalParticipant(state);
+    //const participants = localParticipant ? [...remoteParticipants, localParticipant] : remoteParticipants;
+
     const remoteParticipants = Array.from(getRemoteParticipants(state).values());
-    const localParticipant = getLocalParticipant(state);
-    const participants = localParticipant ? [...remoteParticipants, localParticipant] : remoteParticipants;
+    const participants =  remoteParticipants;
 
     return {
         deviceStatusVisible: isDeviceStatusVisible(state),
@@ -540,6 +555,7 @@ function mapStateToProps(state: IReduxState) {
         showCameraPreview: !isVideoMutedByUser(state),
         showDialog: isJoinByPhoneDialogVisible(state),
         showErrorOnJoin,
+        showErrorDuplicateName,
         showRecordingWarning: Boolean(showRecordingWarning),
         showUnsafeRoomWarning: isInsecureRoomName(room) && isUnsafeRoomWarningEnabled(state),
         unsafeRoomConsent,
