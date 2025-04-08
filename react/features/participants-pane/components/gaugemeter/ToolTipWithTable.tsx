@@ -9,6 +9,7 @@ import TableRow from '@mui/material/TableRow';
 import { TableHead } from '@mui/material';
 import { calcularTempoFora, formatTimeFromMilliseconds } from './TimeUtils';
 import Participante from './Participante';
+import Saida from './Saida';
 
 interface CustomTooltipWithTableProps {
   participante: Participante;
@@ -59,7 +60,7 @@ const CustomTooltipWithTable = ({ participante, children }: CustomTooltipWithTab
                 </TableRow>
               </TableHead>
               <TableBody>
-                {participante.saidas.map((saida, index) => (
+                {participante.saidas.map((saida: Saida, index: number) => (
                   <TableRow
                     key={saida.sequencia}
                     sx={{
