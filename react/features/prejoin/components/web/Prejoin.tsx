@@ -256,7 +256,7 @@ const Prejoin = ({
      * @param {Object} e - The synthetic event.
      * @returns {void}
      */
-    const onJoinButtonClick = (){
+    const onJoinButtonClick = () => {  
         if (showErrorOnJoin) {
             dispatch(openDisplayNamePrompt({
                 onPostSubmit: joinConference,
@@ -264,20 +264,20 @@ const Prejoin = ({
             }));
             return;
         }
-
+    
         const normalizedNewName = name.trim().toLowerCase();
-        const currentUserId = participantId; // ID do participante atual
-
-        console.log('Prejoin: Participantes na sala:', {
+        const currentUserId = participantId;
+    
+        logger.info('Prejoin: Participantes na sala:', {
             participantes: participants,
             currentUser: {
                 id: participantId,
                 name: name
             }
         });
-
+    
         participants.forEach(p => {
-            console.log('Prejoin: Estrutura do participante:', {
+            logger.info('Prejoin: Estrutura do participante:', {
                 id: p.id,
                 name: p.name,
                 displayName: p.displayName,
@@ -285,14 +285,14 @@ const Prejoin = ({
                 todasProps: Object.keys(p)
             });
         });
-
+    
         // Verificação robusta que ignora o usuário atual
         const isDuplicate = participants.some(p => {
             // Ignora o participante atual comparando IDs
             if (currentUserId && p.id === currentUserId) {
                 return false;
             }
-
+    
             // Obtém o nome do participante de todas as fontes possíveis
             const participantName = (
                 p.name ||
@@ -300,10 +300,10 @@ const Prejoin = ({
                 p._displayName ||
                 ''
             ).trim().toLowerCase();
-
+    
             return participantName && participantName === normalizedNewName;
         });
-
+    
         if (isDuplicate) {
             setDuplicateNameError(true);
             logger.error('Prejoin: Nome duplicado detectado', {
@@ -316,12 +316,10 @@ const Prejoin = ({
             });
             return;
         }
-
+    
         setDuplicateNameError(false);
-
         joinConference();
-        return
-    };
+    };  
 
     /**
      * Closes the dropdown.
@@ -571,6 +569,9 @@ function mapStateToProps(state: IReduxState) {
     const remoteParticipants = Array.from(getRemoteParticipants(state).values());
     const localParticipant = getLocalParticipant(state);
     const participants = localParticipant ? [...remoteParticipants, localParticipant] : remoteParticipants;
+
+    logger.info('Prejoin mapStateToProps Id do participante local:',participantId);
+    logger.info('Prejoin mapStateToProps Lista de participantes encontrados na base:',participants);
 
     return {
         deviceStatusVisible: isDeviceStatusVisible(state),
