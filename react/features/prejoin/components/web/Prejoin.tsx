@@ -272,20 +272,21 @@ const Prejoin = ({
         }
         const normalizedNewName = name.trim().toLowerCase();
         
+        showErrorDuplicateName = false;
+        
         if (participants.length === 0){
             return;
         }
-        showErrorDuplicateName = false;
-        const isNameDuplicate = participants.some((p: { name?: string; displayName?: string }) => {
+       
+        showErrorDuplicateName = participants.some((p: { name?: string; displayName?: string }) => {
             const participantName = [p.name, p.displayName].find(Boolean) || '';
             return Boolean(participantName) && 
                    participantName.trim().toLowerCase() === normalizedNewName.trim().toLowerCase();
         });
 
-        if (isNameDuplicate) {
+        if ( showErrorDuplicateName ) {
             logger.error ('Prejoin OnJoinButtonClick nome do participante duplicado');
             logger.error("Prejoin participantes",participants)
-            showErrorDuplicateName = true;
             return;
         }
 

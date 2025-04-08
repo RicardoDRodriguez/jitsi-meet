@@ -890,6 +890,7 @@
         "calling": "Ligando",
         "configuringDevices": "Configurando dispositivos…",
         "connectedWithAudioQ": "Você está conectado com áudio?",
+        "errorDuplicateName": "Este nome já está em uso. Por favor, escolha outro.",
         "connection": {
             "good": "Sua conexão com a internet parece boa!",
             "nonOptimal": "Sua conexão com a internet não é boa",
