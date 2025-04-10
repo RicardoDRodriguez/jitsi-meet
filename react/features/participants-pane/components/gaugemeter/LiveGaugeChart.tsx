@@ -56,7 +56,7 @@ const LiveGaugeChart: React.FC<LiveGaugeChartProps> = () => {
         needleColor="#FFFFFF" // Cor do ponteiro
         hideText={true}
       />
-      <div style={{ position: 'absolute', top: '13%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 1, fontSize: '14px', color: '#FFFFFF' }}> 
+      <div style={{ position: 'absolute', top: '18%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 1, fontSize: '14px', color: '#FFFFFF' }}> 
         {formattedValue}
       </div>
     </div>

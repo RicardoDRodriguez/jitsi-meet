@@ -39,6 +39,7 @@ import logger from '../../logger';
 import { hasDisplayName } from '../../utils';
 
 import JoinByPhoneDialog from './dialogs/JoinByPhoneDialog';
+;
 
 interface IProps {
 
@@ -140,7 +141,7 @@ interface IProps {
     /**
      * Array de participantes
      */
-    participants: Array<{ id?: string, name?: string; displayName?: string; _displayName?: string; }>;
+    participants: Array<{ id?: string, name?: string; displayName?: string; _displayName?: string; local?: any }>;
 
 }
 
@@ -265,6 +266,7 @@ const Prejoin = ({
             return;
         }
     
+   
         const normalizedNewName = name.trim().toLowerCase();
         const currentUserId = participantId;
     
@@ -282,6 +284,7 @@ const Prejoin = ({
                 name: p.name,
                 displayName: p.displayName,
                 _displayName: p._displayName,
+                local: p.local,
                 todasProps: Object.keys(p)
             });
         });
@@ -568,6 +571,7 @@ function mapStateToProps(state: IReduxState) {
     // Criada a lista de participantes 
     const remoteParticipants = Array.from(getRemoteParticipants(state).values());
     const localParticipant = getLocalParticipant(state);
+
     const participants = localParticipant ? [...remoteParticipants, localParticipant] : remoteParticipants;
 
     logger.info('Prejoin mapStateToProps Id do participante local:',participantId);
