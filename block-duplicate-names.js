@@ -21,6 +21,7 @@ function initJitsiBlocking() {
         connection.addEventListener(
             window.JitsiMeetJS.events.connection.CONNECTION_ESTABLISHED,
             () => {
+                console.warn(`initJitsiBlocking: Entrei na rotina de checagem de nome duplicado`);
                 const room = connection.initJitsiConference(
                     window.location.pathname.split('/').pop(),
                     { startAudioMuted: false, startVideoMuted: false }
