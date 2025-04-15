@@ -67,7 +67,7 @@
             window.JitsiMeetJS.events.connection.CONNECTION_FAILED,
             error => {
                 console.error('Falha na conexão:', error);
-                showErrorToUser('Falha ao conectar. Verifique sua internet.');
+                // showErrorToUser('Falha ao conectar. Verifique sua internet.');
             }
         );
     }
