@@ -271,13 +271,17 @@ const Prejoin = ({
         const currentUserId = participantId;
     
         logger.info('Prejoin: Participantes na sala:', {
-            participantes: participants,
+            participantes: participants
+            }
+        );
+    
+        logger.info('Prejoin: Participante Local:', {
             currentUser: {
                 id: participantId,
-                name: name
+                name: name,
             }
         });
-    
+
         participants.forEach(p => {
             logger.info('Prejoin: Estrutura do participante:', {
                 id: p.id,
@@ -573,9 +577,6 @@ function mapStateToProps(state: IReduxState) {
     const localParticipant = getLocalParticipant(state);
 
     const participants = localParticipant ? [...remoteParticipants, localParticipant] : remoteParticipants;
-
-    logger.info('Prejoin mapStateToProps Id do participante local:',participantId);
-    logger.info('Prejoin mapStateToProps Lista de participantes encontrados na base:',participants);
 
     return {
         deviceStatusVisible: isDeviceStatusVisible(state),
