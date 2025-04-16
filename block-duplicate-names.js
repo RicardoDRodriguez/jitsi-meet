@@ -1,3 +1,8 @@
+/**
+ *  block-duplicate-names.js
+ *  Verifica nomes duplicados
+ */
+
 (function () {
     // Configurações globais melhoradas
     const JITSI_CONFIG = {
