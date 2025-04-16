@@ -1,5 +1,5 @@
 // Versão final testada do block-duplicate-names.js
-(function() {
+(function () {
     // Configurações globais
     const JITSI_CONFIG = {
         serviceUrl: 'wss://ricardo.jitsi.participameet.com/xmpp-websocket',
@@ -10,15 +10,15 @@
 
     // Verifica se a API está pronta
     function isJitsiAPIReady() {
-        return window.JitsiMeetJS && 
-               window.JitsiMeetJS.init && 
-               window.JitsiMeetJS.JitsiConnection;
+        return window.JitsiMeetJS &&
+            window.JitsiMeetJS.init &&
+            window.JitsiMeetJS.JitsiConnection;
     }
 
     // Inicialização principal
     function initializeNameCheckSystem() {
         if (!isJitsiAPIReady()) {
-            console.warn('Jitsi API não está pronta. Tentando novamente...');
+            console.warn('block-duplicate-names-> Jitsi API não está pronta. Tentando novamente...');
             setTimeout(initializeNameCheckSystem, 1000);
             return;
         }
@@ -46,12 +46,12 @@
 
             // Configura os listeners de conexão
             setupConnectionListeners(connection);
-            
+
             // Inicia a conexão
             connection.connect();
 
         } catch (error) {
-            console.error('Erro crítico na inicialização:', error);
+            console.error('block-duplicate-names-> Erro crítico na inicialização:', error);
             showErrorToUser('Erro ao conectar à sala. Por favor, recarregue a página.');
         }
     }
@@ -66,7 +66,7 @@
         connection.addEventListener(
             window.JitsiMeetJS.events.connection.CONNECTION_FAILED,
             error => {
-                console.error('Falha na conexão:', error);
+                console.error('block-duplicate-names-> Falha na conexão:', error);
                 // showErrorToUser('Falha ao conectar. Verifique sua internet.');
             }
         );
@@ -74,8 +74,8 @@
 
     // Manipula conexão bem-sucedida
     function handleConnectionSuccess(connection) {
-        console.log('Conexão XMPP estabelecida com sucesso');
-        
+        console.log('block-duplicate-names-> Conexão XMPP estabelecida com sucesso');
+
         const roomName = getRoomNameFromURL();
         const roomOptions = {
             openBridgeChannel: 'datachannel',
@@ -84,10 +84,11 @@
         };
 
         const room = connection.initJitsiConference(roomName, roomOptions);
-        
+        console.log('block-duplicate-names-> sala investigada', room);
+
         // Configura os listeners da sala
         setupRoomListeners(room);
-        
+
         room.join();
     }
 
@@ -95,7 +96,7 @@
     function setupRoomListeners(room) {
         room.on(
             window.JitsiMeetJS.events.conference.CONFERENCE_JOINED,
-            () => console.log('Conferência iniciada com sucesso')
+            () => console.log('block-duplicate-names-> Conferência iniciada com sucesso')
         );
 
         room.on(
@@ -107,20 +108,22 @@
     // Verifica nomes duplicados
     function checkDuplicateName(room, newParticipant) {
         const participants = room.getParticipants();
+        console.log('block-duplicate-names-> Participantes da sala:', participants)
         const currentName = newParticipant.getDisplayName();
-        
-        const isDuplicate = participants.some(p => 
-            p.getDisplayName() === currentName && 
+
+        // Verificação case-insensitive
+        const isDuplicate = participants.some(p =>
+            String(p.getDisplayName()).toLowerCase() === String(currentName).toLowerCase() &&
             p.getId() !== newParticipant.getId()
         );
 
         if (isDuplicate) {
-            console.warn(`Nome duplicado detectado: ${currentName}`);
+            console.warn(`block-duplicate-names->Nome duplicado detectado: ${currentName}`);
             try {
                 room.kickParticipant(newParticipant.getId());
                 showAlert(`O nome "${currentName}" já está em uso. Escolha outro nome.`);
             } catch (error) {
-                console.error('Erro ao expulsar participante:', error);
+                console.error('block-duplicate-names->Erro ao expulsar participante:', error);
             }
         }
     }
@@ -135,7 +138,7 @@
         try {
             window.alert(message);
         } catch (e) {
-            console.warn('Não foi possível mostrar alerta:', e);
+            console.warn('block-duplicate-names->Não foi possível mostrar alerta:', e);
         }
     }
 
@@ -145,14 +148,14 @@
         errorElement.style = 'position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #ff4444; color: white; padding: 15px; z-index: 9999; border-radius: 5px;';
         errorElement.textContent = message;
         document.body.appendChild(errorElement);
-        
+
         setTimeout(() => {
             document.body.removeChild(errorElement);
         }, 5000);
     }
 
     // Inicia o sistema quando o DOM estiver pronto
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
         // Espera até que a API Jitsi esteja pronta
         function waitForJitsi() {
             if (isJitsiAPIReady()) {
@@ -161,7 +164,7 @@
                 setTimeout(waitForJitsi, 500);
             }
         }
-        
+
         waitForJitsi();
     });
 })();
