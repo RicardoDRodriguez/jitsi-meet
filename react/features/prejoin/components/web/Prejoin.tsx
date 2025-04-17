@@ -39,7 +39,8 @@ import logger from '../../logger';
 import { hasDisplayName } from '../../utils';
 
 import JoinByPhoneDialog from './dialogs/JoinByPhoneDialog';
-;
+// import dataBaseForGauge from '../../../participants-pane/components/gaugemeter/DataBaseForGauge';
+
 
 interface IProps {
 
@@ -144,6 +145,7 @@ interface IProps {
     participants: Array<{ id?: string, name?: string; displayName?: string; _displayName?: string; local?: any }>;
 
 }
+
 
 const useStyles = makeStyles()(theme => {
     return {
@@ -269,12 +271,15 @@ const Prejoin = ({
    
         const normalizedNewName = name.trim().toLowerCase();
         const currentUserId = participantId;
+        // const particpantsNames = dataBaseForGauge.getParticipantNames();
     
         logger.info('Prejoin: Participantes na sala:', {
             participantes: participants
             }
         );
-    
+
+        // logger.info('Prejoin: ParticipantsNames frin dataBaseForGauge:', particpantsNames);
+
         logger.info('Prejoin: Participante Local:', {
             currentUser: {
                 id: participantId,
