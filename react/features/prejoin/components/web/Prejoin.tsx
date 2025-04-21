@@ -260,52 +260,48 @@ const Prejoin = ({
      * @returns {void}
      */
     const onJoinButtonClick = () => {  
+        // Verifica se tem nome e sobrenome (pelo menos um espaço entre palavras)
+        const hasFullName = () => {
+            const nameParts = name.trim().split(/\s+/);
+            return nameParts.length >= 2 && nameParts.every(part => part.length > 0);
+        };
+    
         if (showErrorOnJoin) {
             dispatch(openDisplayNamePrompt({
                 onPostSubmit: joinConference,
-                validateInput: hasDisplayName
+                validateInput: (input) => hasDisplayName(input) && input.trim().split(/\s+/).length >= 2
             }));
             return;
         }
     
-   
+        // Verificação de nome completo
+        if (!hasFullName()) {
+            dispatch(openDisplayNamePrompt({
+                onPostSubmit: joinConference,
+                validateInput: (input) => {
+                    const isValid = hasDisplayName(input) && input.trim().split(/\s+/).length >= 2;
+                    if (!isValid) {
+                        alert('Por favor, insira seu nome completo (nome e sobrenome)');
+                    }
+                    return isValid;
+                }
+            }));
+            return;
+        }
+    
         const normalizedNewName = name.trim().toLowerCase();
         const currentUserId = participantId;
-        // const particpantsNames = dataBaseForGauge.getParticipantNames();
     
         logger.info('Prejoin: Participantes na sala:', {
             participantes: participants
-            }
-        );
-
-        // logger.info('Prejoin: ParticipantsNames frin dataBaseForGauge:', particpantsNames);
-
-        logger.info('Prejoin: Participante Local:', {
-            currentUser: {
-                id: participantId,
-                name: name,
-            }
-        });
-
-        participants.forEach(p => {
-            logger.info('Prejoin: Estrutura do participante:', {
-                id: p.id,
-                name: p.name,
-                displayName: p.displayName,
-                _displayName: p._displayName,
-                local: p.local,
-                todasProps: Object.keys(p)
-            });
         });
     
         // Verificação robusta que ignora o usuário atual
         const isDuplicate = participants.some(p => {
-            // Ignora o participante atual comparando IDs
             if (currentUserId && p.id === currentUserId) {
                 return false;
             }
     
-            // Obtém o nome do participante de todas as fontes possíveis
             const participantName = (
                 p.name ||
                 p.displayName ||
@@ -331,7 +327,7 @@ const Prejoin = ({
     
         setDuplicateNameError(false);
         joinConference();
-    };  
+    };
 
     /**
      * Closes the dropdown.
