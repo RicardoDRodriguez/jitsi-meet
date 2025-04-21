@@ -266,6 +266,13 @@ const Prejoin = ({
             return nameParts.length >= 2 && nameParts.every(part => part.length > 0);
         };
 
+
+        // Verificação de nome completo
+        if (!hasFullName()) {
+            alert('Por favor, insira seu nome completo (nome e sobrenome)');
+                    return;
+        }
+
         if (showErrorOnJoin) {
             dispatch(openDisplayNamePrompt({
                 onPostSubmit: joinConference,
@@ -274,11 +281,7 @@ const Prejoin = ({
             return;
         }
 
-        // Verificação de nome completo
-        if (!hasFullName()) {
-            alert('Por favor, insira seu nome completo (nome e sobrenome)');
-            return;
-        }
+
 
         const normalizedNewName = name.trim().toLowerCase();
         const currentUserId = participantId;
