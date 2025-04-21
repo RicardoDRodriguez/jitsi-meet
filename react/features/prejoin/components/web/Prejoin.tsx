@@ -259,13 +259,13 @@ const Prejoin = ({
      * @param {Object} e - The synthetic event.
      * @returns {void}
      */
-    const onJoinButtonClick = () => {  
+    const onJoinButtonClick = () => {
         // Verifica se tem nome e sobrenome (pelo menos um espaço entre palavras)
         const hasFullName = () => {
             const nameParts = name.trim().split(/\s+/);
             return nameParts.length >= 2 && nameParts.every(part => part.length > 0);
         };
-    
+
         if (showErrorOnJoin) {
             dispatch(openDisplayNamePrompt({
                 onPostSubmit: joinConference,
@@ -273,45 +273,36 @@ const Prejoin = ({
             }));
             return;
         }
-    
+
         // Verificação de nome completo
         if (!hasFullName()) {
-            dispatch(openDisplayNamePrompt({
-                onPostSubmit: joinConference,
-                validateInput: (input) => {
-                    const isValid = hasDisplayName(input) && input.trim().split(/\s+/).length >= 2;
-                    if (!isValid) {
-                        alert('Por favor, insira seu nome completo (nome e sobrenome)');
-                    }
-                    return isValid;
-                }
-            }));
+            alert('Por favor, insira seu nome completo (nome e sobrenome)');
             return;
         }
-    
+
         const normalizedNewName = name.trim().toLowerCase();
         const currentUserId = participantId;
-    
+
         logger.info('Prejoin: Participantes na sala:', {
             participantes: participants
         });
-    
+
         // Verificação robusta que ignora o usuário atual
         const isDuplicate = participants.some(p => {
             if (currentUserId && p.id === currentUserId) {
                 return false;
             }
-    
+
             const participantName = (
                 p.name ||
                 p.displayName ||
                 p._displayName ||
                 ''
             ).trim().toLowerCase();
-    
+
             return participantName && participantName === normalizedNewName;
         });
-    
+
         if (isDuplicate) {
             setDuplicateNameError(true);
             logger.error('Prejoin: Nome duplicado detectado', {
@@ -324,7 +315,7 @@ const Prejoin = ({
             });
             return;
         }
-    
+
         setDuplicateNameError(false);
         joinConference();
     };
