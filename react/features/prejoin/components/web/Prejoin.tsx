@@ -275,7 +275,7 @@ const Prejoin = ({
         if (showErrorOnJoin) {
             dispatch(openDisplayNamePrompt({
                 onPostSubmit: joinConference,
-                validateInput: (input) => hasDisplayName(input) && input.trim().split(/\s+/).length >= 2
+                validateInput: (input:any) => hasDisplayName(input) && input.trim().split(/\s+/).length >= 2
             }));
             return;
         }
