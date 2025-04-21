@@ -265,8 +265,7 @@ const Prejoin = ({
             const nameParts = name.trim().split(/\s+/);
             return nameParts.length >= 2 && nameParts.every(part => part.length > 0);
         };
-
-
+  
         // Verificação de nome completo
         if (!hasFullName()) {
             alert('Por favor, insira seu nome completo (nome e sobrenome)');
@@ -280,8 +279,6 @@ const Prejoin = ({
             }));
             return;
         }
-
-
 
         const normalizedNewName = name.trim().toLowerCase();
         const currentUserId = participantId;
