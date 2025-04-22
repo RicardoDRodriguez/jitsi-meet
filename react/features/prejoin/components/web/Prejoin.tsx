@@ -445,7 +445,8 @@ const Prejoin = ({
     const onInputKeyPress = (e: React.KeyboardEvent) => {
         if (e.key === 'Enter') {
             logger.info('Dispatching join conference on Enter key press from the prejoin screen.');
-            joinConference();
+            onJoinButtonClick();
+           //joinConference();
         }
     };
 
