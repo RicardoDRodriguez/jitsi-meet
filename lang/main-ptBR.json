@@ -312,7 +312,7 @@
         "e2eeWarning": "WARNING: Not all participants in this meeting seem to have support for End-to-End encryption. If you enable it they won't be able to see nor hear you.",
         "e2eeWillDisableDueToMaxModeDescription": "AVISO: A criptografia de ponta-a-ponta será automaticamente desativada se mais participantes entrarem na conferência.",
         "embedMeeting": "Reunião em formato compacto",
-        "enterDisplayName": "Digite seu nome aqui",
+        "enterDisplayName": "Digite seu nome e sobrenome aqui",
         "error": "Erro",
         "gracefulShutdown": "Nosso serviço está em manutenção. Tente novamente mais tarde.",
         "grantModeratorDialog": "Tem certeza que quer participar como moderador da reunião?",
