@@ -11,6 +11,7 @@ import LocalRecordingManager from '../../recording/components/Recording/LocalRec
 import { setJWT } from '../jwt/actions';
 
 import { _connectInternal } from './actions.any';
+import logger from './logger';
 
 export * from './actions.any';
 
@@ -44,6 +45,8 @@ export function connect(id?: string, password?: string) {
         // used by jibri
         const usernameOverride = jitsiLocalStorage.getItem('xmpp_username_override');
         const passwordOverride = jitsiLocalStorage.getItem('xmpp_password_override');
+
+        logger.info(' base.actions.web.ts Connect. Username e password:',usernameOverride,passwordOverride);
 
         if (usernameOverride && usernameOverride.length > 0) {
             id = usernameOverride; // eslint-disable-line no-param-reassign

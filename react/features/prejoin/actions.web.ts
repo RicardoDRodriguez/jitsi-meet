@@ -196,6 +196,9 @@ export function dialOut(onSuccess: Function, onFail: Function) {
 export function joinConference(options?: Object, ignoreJoiningInProgress = false,
         jid?: string, password?: string) {
     return function(dispatch: IStore['dispatch'], getState: IStore['getState']) {
+        
+
+
         if (!ignoreJoiningInProgress) {
             const state = getState();
             const { joiningInProgress } = state['features/prejoin'];
@@ -209,7 +212,7 @@ export function joinConference(options?: Object, ignoreJoiningInProgress = false
 
         options && dispatch(updateConfig(options));
 
-        logger.info('Dispatching connect from joinConference.');
+        logger.info('Dispatching connect from joinConference.',jid);
         dispatch(connect(jid, password))
         .catch(() => {
             // There is nothing to do here. This is handled and dispatched in base/connection/actions.

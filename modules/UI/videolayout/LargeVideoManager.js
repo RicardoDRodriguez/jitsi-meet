@@ -464,11 +464,12 @@ export default class LargeVideoManager {
             this.preferredHeight = height;
         }
 
+
         let widthToUse = this.preferredWidth || window.innerWidth;
         const state = APP.store.getState();
         const { isOpen } = state['features/chat'];
         const { width: filmstripWidth, visible } = state['features/filmstrip'];
-        const isParticipantsPaneOpen = getParticipantsPaneOpen(state);
+        const isParticipantsPaneOpen =  getParticipantsPaneOpen(state);
         const resizableFilmstrip = isFilmstripResizable(state);
 
         if (isParticipantsPaneOpen) {

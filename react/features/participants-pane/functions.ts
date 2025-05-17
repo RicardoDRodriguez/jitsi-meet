@@ -131,7 +131,7 @@ export const getParticipantsPaneConfig = (stateful: IStateful) => {
  * @param {IReduxState} state - Global state.
  * @returns {boolean} Is the participants pane open.
  */
-export const getParticipantsPaneOpen = (state: IReduxState) => Boolean(getState(state)?.isOpen);
+export const getParticipantsPaneOpen = (state: IReduxState) =>  Boolean(getState(state)?.isOpen);
 
 /**
  * Returns the type of quick action button to be displayed for a participant.

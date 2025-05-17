@@ -227,7 +227,7 @@ const useStyles = makeStyles()(theme => {
 
 const ParticipantsPane = () => {
     const { classes, cx } = useStyles();
-    const paneOpen = useSelector(getParticipantsPaneOpen);
+    const paneOpen = true; // useSelector(getParticipantsPaneOpen);
     const isBreakoutRoomsSupported = useSelector((state: IReduxState) => state['features/base/conference'])
         .conference?.getBreakoutRooms()?.isSupported();
 

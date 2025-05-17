@@ -25,100 +25,110 @@ class DataBaseForGauge {
   private static instance: DataBaseForGauge | null = null;
 
   private constructor() {
-      // Inicialização da classe (se necessário)
-      console.log("==== 0. ClearData = construtor do DataBaseForGauge chamado.");
+    // Inicialização da classe (se necessário)
+    console.log("==== 0. ClearData = construtor do DataBaseForGauge chamado.");
   }
 
 
   public getParticipantNames(): IChaveDataBase[] {
+    try {
     const sortedParticipantIds: any[] = getSortedParticipantIds(DataBaseForGauge.state);
     const nomesChave: IChaveDataBase[] = [];
     let chave: IChaveDataBase;
 
     // Processa participantes remotos
     sortedParticipantIds.forEach((id: string) => {
-        const user = APP.conference.getParticipantById(id);
-        console.log("==== 1. ClearData = Varrendo Ids", id, user);
-        if (user) {
-            nomesChave.push({
-                key:id,
-                nomeChave: user.getDisplayName()
-            });
-        }
+      const user = APP.conference.getParticipantById(id);
+      console.log("==== 1. ClearData = Varrendo Ids", id, user);
+      if (user) {
+        nomesChave.push({
+          key: id,
+          nomeChave: user.getDisplayName()
+        });
+      }
+   
     });
 
     // Processa participante local
     const localUser = getLocalParticipant(DataBaseForGauge.state);
     if (localUser) {
-        nomesChave.push({
-            key: localUser.id,
-            nomeChave: localUser.name
-        });
+      nomesChave.push({
+        key: localUser.id,
+        nomeChave: localUser.name
+      });
     }
-    console.log("==== 3. ClearData = nomesChave",nomesChave);
+    console.log("==== 3. ClearData = nomesChave", nomesChave);
     return nomesChave;
-}
-  
+     } catch (error:any) {
+        console.log('==== 2. ClearData = erro encontrado', error.message);
+        return [];
+    }
+  }
+
   /**
    * Atualiza os participantes ativando ou desativando conforme suas ações !
    */
 
   async clearData(): Promise<void> {
-    const atualizarStatusParticipantes = () => {
-    
-    const sortedParticipantsKey: IChaveDataBase[] = this.getParticipantNames();  
-      DataBaseForGauge.participantes.forEach(participante => {
-        
-        // Verifica se o individo está ativo
-        const isActive = sortedParticipantsKey.some(
-          (participantKey) => participantKey.nomeChave === participante.name
-        );
-  
-        // Participante ESTÁ na lista de ativos (retornou ou nunca saiu)
-        if (isActive) {
-          if (participante.isOut) {
-            // Caso 1: Participante RETORNOU (estava isOut=true e agora está ativo)
-            participante.isOut = false;
-            participante.isReturned = true;
-            participante.numberOfReturns = (participante.numberOfReturns || 0) + 1;
-  
-            // Registra o horário de retorno na última saída (se houver saídas)
-            if (participante.saidas?.length) {
-              participante.saidas[participante.saidas.length - 1].horarioDeRetorno = Date.now();
-              participante.saidas[participante.saidas.length - 1].horaRetorno = getHorarioAtual();
+    try {
+      const atualizarStatusParticipantes = () => {
+
+        const sortedParticipantsKey: IChaveDataBase[] = this.getParticipantNames();
+        DataBaseForGauge.participantes.forEach(participante => {
+
+          // Verifica se o individo está ativo
+          const isActive = sortedParticipantsKey.some(
+            (participantKey) => participantKey.nomeChave === participante.name
+          );
+
+          // Participante ESTÁ na lista de ativos (retornou ou nunca saiu)
+          if (isActive) {
+            if (participante.isOut) {
+              // Caso 1: Participante RETORNOU (estava isOut=true e agora está ativo)
+              participante.isOut = false;
+              participante.isReturned = true;
+              participante.numberOfReturns = (participante.numberOfReturns || 0) + 1;
+
+              // Registra o horário de retorno na última saída (se houver saídas)
+              if (participante.saidas?.length) {
+                participante.saidas[participante.saidas.length - 1].horarioDeRetorno = Date.now();
+                participante.saidas[participante.saidas.length - 1].horaRetorno = getHorarioAtual();
+              }
+            } else {
+              // Caso 2: Participante NUNCA SAIU (mantém isOut=false)
+              participante.isReturned = false;
             }
-          } else {
-            // Caso 2: Participante NUNCA SAIU (mantém isOut=false)
-            participante.isReturned = false;
           }
-        }
-        // Participante NÃO está na lista de ativos (saiu ou já estava fora)
-        else {
-          if (!participante.isOut) {
-            // Caso 3: NOVA SAÍDA (não estava isOut=true)
-            const saida = new Saida(
-              participante.saidas ? participante.saidas.length + 1 : 1,
-              Date.now(), getHorarioAtual()
-            );
-            participante.isOut = true;
-            participante.isReturned = false;
-            participante.saidas = participante.saidas || [];
-            participante.saidas.push(saida);
+          // Participante NÃO está na lista de ativos (saiu ou já estava fora)
+          else {
+            if (!participante.isOut) {
+              // Caso 3: NOVA SAÍDA (não estava isOut=true)
+              const saida = new Saida(
+                participante.saidas ? participante.saidas.length + 1 : 1,
+                Date.now(), getHorarioAtual()
+              );
+              participante.isOut = true;
+              participante.isReturned = false;
+              participante.saidas = participante.saidas || [];
+              participante.saidas.push(saida);
+            }
+            // Caso 4: JÁ ESTAVA FORA (não faz nada)
           }
-          // Caso 4: JÁ ESTAVA FORA (não faz nada)
-        }
-      });
-  
-      console.log('==== 0. ClearData = Status atualizado:', DataBaseForGauge.participantes);
-    };
-  
-    if (DataBaseForGauge.participantes.length > 0) {
-      atualizarStatusParticipantes();
-    } else {
-      console.log('==== 1. ClearData = Nenhum participante encontrado.');
+        });
+
+        console.log('==== 0. ClearData = Status atualizado:', DataBaseForGauge.participantes);
+      };
+
+      if (DataBaseForGauge.participantes.length > 0) {
+        atualizarStatusParticipantes();
+      } else {
+        console.log('==== 1. ClearData = Nenhum participante encontrado.');
+      }
+    } catch (error: any) {
+      console.log('==== 2. ClearData = erro encontrado', error.message);
     }
   }
-  
+
 
   async percorrerParticipantes(): Promise<void> {
     console.log("Percorrendo todos os participantes:");
@@ -132,18 +142,21 @@ class DataBaseForGauge {
   **/
 
   async setStateAndConference(): Promise<void> {
-    while (!APP.store || !APP.conference) {
+    try {
+      while (!APP.store || !APP.conference) {
         await new Promise(resolve => setTimeout(resolve, 100)); // Espera um pouco
         console.warn("==== 0. setStateAndConference -> Aguardando APP.store e APP.conference...");
+      }
+      DataBaseForGauge.state = APP.store.getState();
+      DataBaseForGauge.conference = APP.conference;
+      if (!DataBaseForGauge.roomStarted) {
+        DataBaseForGauge.roomStarted = Date.now();
+      }
+      console.log("==== 1. setStateAndConference -> roomStarted: ", DataBaseForGauge.roomStarted);
+    } catch (error: any) {
+      console.log(` ==== set State e Conference com erro ${error.message} ===`);
     }
-    DataBaseForGauge.state = APP.store.getState();
-    DataBaseForGauge.conference = APP.conference;
-    if (!DataBaseForGauge.roomStarted) {
-      DataBaseForGauge.roomStarted = Date.now();
-    }
-    console.log("==== 1. setStateAndConference -> roomStarted: ", DataBaseForGauge.roomStarted);
-}
-
+  }
 
   /**
     * Carrega a lista de participantes para ser processada por GaugeMeter
@@ -152,14 +165,14 @@ class DataBaseForGauge {
     */
   async carregarParticipantes(id: string | string[] | any): Promise<void> {
     // Verifica o tipo da variavel
-    
+
     const type = this.checkIsType(id);
 
 
 
     console.log(`==== 1. carregarParticipantes. Processando chave:`, id);
     console.log(`==== 2. carregarParticipantes. Processando type:`, type);
-   
+
 
     // Carrega o nome da sala
     DataBaseForGauge.room = '';
@@ -206,17 +219,22 @@ class DataBaseForGauge {
    * Carrega Participantes de functions de participants-pane
   **/
   async loadParticipantes(): Promise<void> {
-    console.log(`==== 1. loadParticipantes --> Limpando os dados de DataBaseForGauge`)
-    this.clearData();
+    try {
+      console.log(`==== 1. loadParticipantes --> Limpando os dados de DataBaseForGauge`);
+      this.clearData();
 
-    console.log(`==== 2. loadParticipantes --> Carregando a funcao setStateAndConference`)
-    this.setStateAndConference();
-    //Carrega Id de participantes de function
-    let sortedParticipantIds: any = getSortedParticipantIds(DataBaseForGauge.state);
-    console.log(`==== 3. loadParticipantes --> Carregando a variavel iReorderedParticipants`, sortedParticipantIds);
-    this.carregarParticipantes(sortedParticipantIds);
+      console.log(`==== 2. loadParticipantes --> Carregando a funcao setStateAndConference`);
+      this.setStateAndConference();
+
+      //Carrega Id de participantes de function
+      let sortedParticipantIds: any = getSortedParticipantIds(DataBaseForGauge.state);
+      console.log(`==== 3. loadParticipantes --> Carregando a variavel iReorderedParticipants`, sortedParticipantIds);
+      this.carregarParticipantes(sortedParticipantIds);
+    } catch (error: any) {
+      console.error('==== 4. loadParticipantes --> Erro ao carregar participantes:', error);
+      // throw error; // Re-lança o erro para que chamadores possam tratá-lo se necessário
+    }
   }
-
 
   /**
    * checa o tipo de participante.
@@ -235,7 +253,7 @@ class DataBaseForGauge {
       } else {
         return 'other';
       }
-    } catch (erro: any){
+    } catch (erro: any) {
       console.error("Erro assíncrono capturado:", erro.message);
       return "Não foi possivel definir o tipo de id";
     }
@@ -249,11 +267,11 @@ class DataBaseForGauge {
 
   hasParticipante(id: string): boolean {
     let found: boolean = false;
-  
+
     if (DataBaseForGauge.participantes.length === 0) {
       return found;
     }
-  
+
     try {
       found = DataBaseForGauge.participantes.some((participante) => {
         return participante.id === id;
@@ -261,171 +279,189 @@ class DataBaseForGauge {
     } catch (error: any) {
       console.log(`hasParticipante -> Ocorreu o erro de verificar se existe o participante ${error.message}`);
     }
-  
+
     return found; // Retorna o valor correto após o try...catch
-  
+
   }
 
   async getParticipantesPercentualAcumuloFala(): Promise<Participante[]> {
-    this.loadParticipantes()
+    try {
+      await this.loadParticipantes();
 
-    const totalTempoDeFalaEmMinutos = DataBaseForGauge.participantes.reduce(
-      (total, participante) => total + Number(participante.tempoDeFala), 0
-    );
+      const totalTempoDeFalaEmMinutos = DataBaseForGauge.participantes.reduce(
+        (total, participante) => total + Number(participante.tempoDeFala), 0
+      );
 
-    console.log(`==== 1. getParticipantes  --> total de tempo de fala ${totalTempoDeFalaEmMinutos}: `);
-    DataBaseForGauge.participantes.forEach((participante) => {
-      participante.percentualAcumuloFala = (participante.tempoDeFala / totalTempoDeFalaEmMinutos) * 100;
-    });
+      console.log(`==== 1. getParticipantes  --> total de tempo de fala ${totalTempoDeFalaEmMinutos}: `);
+      DataBaseForGauge.participantes.forEach((participante) => {
+        participante.percentualAcumuloFala = (participante.tempoDeFala / totalTempoDeFalaEmMinutos) * 100;
+      });
 
-    const participantesOrdenadosDescrescente = DataBaseForGauge.participantes.slice().sort((a, b) => b.percentualAcumuloFala - a.percentualAcumuloFala);
-    return participantesOrdenadosDescrescente;
+      const participantesOrdenadosDescrescente = DataBaseForGauge.participantes.slice().sort((a, b) => b.percentualAcumuloFala - a.percentualAcumuloFala);
+      return participantesOrdenadosDescrescente;
+    } catch (error: any) {
+      console.error("Error in getParticipantesPercentualAcumuloFala:", error);
+      return []; // Retorna um novo array vazio em caso de erro
+    }
   }
 
-
   async calcularGini(): Promise<number> {
-    await this.loadParticipantes();
+    try {
+      await this.loadParticipantes();
 
-    const participantesFinal = DataBaseForGauge.participantes.slice().sort((a, b) => a.tempoDeFala - b.tempoDeFala);
+      const participantesFinal = DataBaseForGauge.participantes.slice().sort((a, b) => a.tempoDeFala - b.tempoDeFala);
 
-    //------------------------------------------------------- 
-    // COLUNA 3 do artigo
-    // Calcula o fatorDeRiquezaAbsoluta de cada participante
-    // Tempo de Fala / Total de tempo de fala = Sigma(f) 
-    //------------------------------------------------------- 
-    const totalTempoDeFalaEmSegundos = DataBaseForGauge.participantes.reduce(
-      (total, participante) => total + parseInt(participante.tempoDeFala.toString()), 0
-    );
-    console.log('==== 1. CalcularGini - totalTempoDeFalaEmSegundos = ', totalTempoDeFalaEmSegundos);
+      //------------------------------------------------------- 
+      // COLUNA 3 do artigo
+      // Calcula o fatorDeRiquezaAbsoluta de cada participante
+      // Tempo de Fala / Total de tempo de fala = Sigma(f) 
+      //------------------------------------------------------- 
+      const totalTempoDeFalaEmSegundos = DataBaseForGauge.participantes.reduce(
+        (total, participante) => total + parseInt(participante.tempoDeFala.toString()), 0
+      );
+      console.log('==== 1. CalcularGini - totalTempoDeFalaEmSegundos = ', totalTempoDeFalaEmSegundos);
 
-    participantesFinal.forEach((participante, index) => {
-      participantesFinal[index].fatorRiquezaAbsoluta = participante.tempoDeFala / totalTempoDeFalaEmSegundos;
-    });
-    console.log('==== 2. CalcularGini - Lista de fatorRiquezaAbsoluta = ', participantesFinal);
+      participantesFinal.forEach((participante, index) => {
+        participantesFinal[index].fatorRiquezaAbsoluta = participante.tempoDeFala / totalTempoDeFalaEmSegundos;
+      });
+      console.log('==== 2. CalcularGini - Lista de fatorRiquezaAbsoluta = ', participantesFinal);
 
-    //------------------------------------------------------- 
-    // COLUNA 5 do artigo
-    // Proporcao do tempo de presença de cada participante
-    // Total de tempo de fala = Sigma(f)
-    //------------------------------------------------------- 
+      //------------------------------------------------------- 
+      // COLUNA 5 do artigo
+      // Proporcao do tempo de presença de cada participante
+      // Total de tempo de fala = Sigma(f)
+      //------------------------------------------------------- 
 
-    const totalTempoDePresença = DataBaseForGauge.participantes.reduce((total, participante) => {
-      return total + participante.tempoPresenca;
-    }, 0);
-
-
-    console.log('==== 3. CalcularGini - totalTempoPresenca = ', totalTempoDePresença);
-
-    participantesFinal.forEach((participante, index) => {
-      if (participante.fatorTempoPresenca) {
-        participantesFinal[index].fatorTempoPresenca = participante.tempoPresenca / totalTempoDePresença;
-      } else {
-        participantesFinal[index].fatorTempoPresenca = participante.tempoPresenca / totalTempoDePresença;
-      }
-      console.log('==== 3.1. CalcularGini - FatorTempoPresenca = ', participantesFinal[index].fatorTempoPresenca);
-    });
-    console.log('==== 4. CalcularGini - Lista de fatorTempoPresenca = ', participantesFinal);
-
-    //------------------------------------------------------- 
-    // COLUNA 6 do artigo
-    // Proporcao de tempo de presenca ACUMULADA DA POPULACAO
-    //-------------------------------------------------------  
-
-    let fatorTempoPresencaAcumuladoAnterior = 0;
-
-    participantesFinal.forEach((participante, index) => {
-      participantesFinal[index].fatorAcumuladoPresenca = participante.fatorTempoPresenca + fatorTempoPresencaAcumuladoAnterior;
-      fatorTempoPresencaAcumuladoAnterior = participante.fatorAcumuladoPresenca;
-    });
-    console.log('==== 4. CalcularGini - fatorAcumiladoPresença = ', participantesFinal);
-
-    //------------------------------------------------------- 
-    // COLUNA 7 do artigo
-    // Acumulo da proporção dos tempos de fala
-    // Riqueza relativa acumulada - ponto da curva Lorenz
-    //-------------------------------------------------------  
-    let fatorAcumuladoLorenz = 0;
-
-    participantesFinal.forEach((participante, index) => {
-      participantesFinal[index].fatorAcumuladoCurvaLorenz = participante.fatorRiquezaAbsoluta + fatorAcumuladoLorenz;
-      fatorAcumuladoLorenz = participante.fatorAcumuladoCurvaLorenz;
-    });
-
-    console.log("==== 5. CalcularGini - Colecao de participantes com o calculo de Gini: ", participantesFinal);
+      const totalTempoDePresença = DataBaseForGauge.participantes.reduce((total, participante) => {
+        return total + participante.tempoPresenca;
+      }, 0);
 
 
-    // Participantes ordenados de forma decrescente
-    const participantesOrdenados = participantesFinal.slice().sort((a, b) => b.tempoDeFala - a.tempoDeFala);
-    console.log("Colecao de participantes: ", participantesOrdenados);
+      console.log('==== 3. CalcularGini - totalTempoPresenca = ', totalTempoDePresença);
 
-    /*
-      Calcula a soma acumulativa dos tempos de fala dos participantes
-    */
+      participantesFinal.forEach((participante, index) => {
+        if (participante.fatorTempoPresenca) {
+          participantesFinal[index].fatorTempoPresenca = participante.tempoPresenca / totalTempoDePresença;
+        } else {
+          participantesFinal[index].fatorTempoPresenca = participante.tempoPresenca / totalTempoDePresença;
+        }
+        console.log('==== 3.1. CalcularGini - FatorTempoPresenca = ', participantesFinal[index].fatorTempoPresenca);
+      });
+      console.log('==== 4. CalcularGini - Lista de fatorTempoPresenca = ', participantesFinal);
 
-    const ocupantesDaSala = participantesFinal.length;
-    const somaAcumulativaTempo = participantesOrdenados.reduce((soma, participante) => {
-      soma += participante.tempoDeFala;
-      return soma;
-    }, 0);
+      //------------------------------------------------------- 
+      // COLUNA 6 do artigo
+      // Proporcao de tempo de presenca ACUMULADA DA POPULACAO
+      //-------------------------------------------------------  
 
-    console.log("==== 6. CalcularGini -  Soma dos tempos : ", somaAcumulativaTempo);
-    console.log("==== 7. CalcularGini - Ocupantes da Sala:", ocupantesDaSala);
+      let fatorTempoPresencaAcumuladoAnterior = 0;
 
-    /*
-    Participantes ordenados de forma crescente
+      participantesFinal.forEach((participante, index) => {
+        participantesFinal[index].fatorAcumuladoPresenca = participante.fatorTempoPresenca + fatorTempoPresencaAcumuladoAnterior;
+        fatorTempoPresencaAcumuladoAnterior = participante.fatorAcumuladoPresenca;
+      });
+      console.log('==== 4. CalcularGini - fatorAcumiladoPresença = ', participantesFinal);
+
+      //------------------------------------------------------- 
+      // COLUNA 7 do artigo
+      // Acumulo da proporção dos tempos de fala
+      // Riqueza relativa acumulada - ponto da curva Lorenz
+      //-------------------------------------------------------  
+      let fatorAcumuladoLorenz = 0;
+
+      participantesFinal.forEach((participante, index) => {
+        participantesFinal[index].fatorAcumuladoCurvaLorenz = participante.fatorRiquezaAbsoluta + fatorAcumuladoLorenz;
+        fatorAcumuladoLorenz = participante.fatorAcumuladoCurvaLorenz;
+      });
+
+      console.log("==== 5. CalcularGini - Colecao de participantes com o calculo de Gini: ", participantesFinal);
+
+
+      // Participantes ordenados de forma decrescente
+      const participantesOrdenados = participantesFinal.slice().sort((a, b) => b.tempoDeFala - a.tempoDeFala);
+      console.log("Colecao de participantes: ", participantesOrdenados);
+
+      /*
+        Calcula a soma acumulativa dos tempos de fala dos participantes
+      */
+
+      const ocupantesDaSala = participantesFinal.length;
+      const somaAcumulativaTempo = participantesOrdenados.reduce((soma, participante) => {
+        soma += participante.tempoDeFala;
+        return soma;
+      }, 0);
+
+      console.log("==== 6. CalcularGini -  Soma dos tempos : ", somaAcumulativaTempo);
+      console.log("==== 7. CalcularGini - Ocupantes da Sala:", ocupantesDaSala);
+
+      /*
+      Participantes ordenados de forma crescente
+       */
+      const participantesOrdenadosCrescente = DataBaseForGauge.participantes.slice().sort((a, b) => a.tempoDeFala - b.tempoDeFala);
+      /*
+      Remove o ultimo elemento da coleção conforme descrito na formula.
+      */
+      participantesOrdenadosCrescente.pop();
+
+      /*
+      Calculo Final do Gini e do participometro usando 1-formula
      */
-    const participantesOrdenadosCrescente = DataBaseForGauge.participantes.slice().sort((a, b) => a.tempoDeFala - b.tempoDeFala);
-    /*
-    Remove o ultimo elemento da coleção conforme descrito na formula.
-    */
-    participantesOrdenadosCrescente.pop();
+      let fiAnterior = 0;
+      const ultimaPosicao = participantesOrdenadosCrescente.length - 1;
+      let somatorioFi = 0;
+      let ultimoElemento = 0;
 
-    /*
-    Calculo Final do Gini e do participometro usando 1-formula
-   */
-    let fiAnterior = 0;
-    const ultimaPosicao = participantesOrdenadosCrescente.length - 1;
-    let somatorioFi = 0;
-    let ultimoElemento = 0;
-
-    participantesOrdenadosCrescente.forEach((participante, index) => {
-      somatorioFi += (fiAnterior + participante.fatorAcumuladoCurvaLorenz) * participante.fatorTempoPresenca;
-      fiAnterior = participante.fatorAcumuladoCurvaLorenz;
-      if (index === ultimaPosicao) {
-        ultimoElemento = participante.fatorAcumuladoPresenca;
-      }
-    });
+      participantesOrdenadosCrescente.forEach((participante, index) => {
+        somatorioFi += (fiAnterior + participante.fatorAcumuladoCurvaLorenz) * participante.fatorTempoPresenca;
+        fiAnterior = participante.fatorAcumuladoCurvaLorenz;
+        if (index === ultimaPosicao) {
+          ultimoElemento = participante.fatorAcumuladoPresenca;
+        }
+      });
 
 
-    /*
-    Calculo final do Gini´ usando a formula do artigo
-    */
-    console.log("==== 8. CalcularGini -  Soma AcumulativaTempo : ", somaAcumulativaTempo);
-    console.log("==== 9. CalcularGini - ultimo Elemento:", ultimoElemento);
+      /*
+      Calculo final do Gini´ usando a formula do artigo
+      */
+      console.log("==== 8. CalcularGini -  Soma AcumulativaTempo : ", somaAcumulativaTempo);
+      console.log("==== 9. CalcularGini - ultimo Elemento:", ultimoElemento);
 
-    const giniIndex = (somatorioFi / (ultimoElemento ** 2));
-    console.log("==== 10. CalcularGini - Valor Final de Gini:", giniIndex);
+      const giniIndex = (somatorioFi / (ultimoElemento ** 2));
+      console.log("==== 10. CalcularGini - Valor Final de Gini:", giniIndex);
 
-    return giniIndex;
+      return giniIndex;
+    } catch (error: any) {
+      console.error("==== 11. CalcularGini - Error calculating Gini index:", error);
+      return 0;
+    }
   }
 
   async calcularMediaTempoDeFala(): Promise<number> {
-    if (DataBaseForGauge.participantes.length === 0) {
-      console.log("Não encontrei participantes para calcular a média");
-      return 0;
-    }
+    let retorno = 0
+    try {
 
-    const totalTempoDeFalaEmMinutos = DataBaseForGauge.participantes.reduce(
-      (total, participante) => total + parseInt(participante.tempoDeFala.toString()), 0
-    );
-    return totalTempoDeFalaEmMinutos / DataBaseForGauge.participantes.length;
+      if (DataBaseForGauge.participantes.length === 0) {
+        console.log("Não encontrei participantes para calcular a média");
+        return 0;
+      }
+
+      const totalTempoDeFalaEmMinutos = DataBaseForGauge.participantes.reduce(
+        (total, participante) => total + parseInt(participante.tempoDeFala.toString()), 0
+      );
+      retorno = totalTempoDeFalaEmMinutos / DataBaseForGauge.participantes.length;
+    } catch (error: any) {
+      console.error("==== CalcularMeida Tempo de fala - Error calculating Gini index:", error);
+      retorno = 0;
+    }
+    return retorno;
   }
 
   async processarParticipante(key: string, room: string): Promise<void> {
+    try {
     console.log(` ==== 1. processarParticipante --> Processando chave: ${key} no foreach em processarParticipante ===`);
     const now = new Date().getTime()
 
-    const atualizarParticipante = (idkey:any, participante:Participante, stats:ISpeaker, now:number) => {
+    const atualizarParticipante = (idkey: any, participante: Participante, stats: ISpeaker, now: number) => {
       participante.id = idkey;
       participante.tempoDeFala = stats.getTotalDominantSpeakerTime() ?? participante.tempoDeFala;
       participante.tempoPresenca = now - participante.entradaNaSala;
@@ -434,16 +470,16 @@ class DataBaseForGauge {
       console.log(`==== 6. processarParticipante  --> participante atualizado ${participante.id}: `, participante);
     };
 
-    const adicionarParticipante = (participante:Participante, stats: ISpeaker, partic:IParticipant) => {
+    const adicionarParticipante = (participante: Participante, stats: ISpeaker, partic: IParticipant) => {
       const user = APP.conference.getParticipantById(partic.id);
 
       console.log(`==== 1. processarParticipante  --> partic : `, partic);
-      console.log(`==== 2. processarParticipante  --> stats : `, stats );
+      console.log(`==== 2. processarParticipante  --> stats : `, stats);
       console.log(`==== 3. processarParticipante  -->. user: `, user);
-      
+
       const novoParticipante = {
         ...participante,
-        id:partic.id,
+        id: partic.id,
         tempoDeFala: stats.getTotalDominantSpeakerTime() ?? participante.tempoDeFala,
         entradaNaSala: partic.userStartTime ?? user.userStartTime,
         tempoPresenca: 0,
@@ -486,16 +522,18 @@ class DataBaseForGauge {
         }
       }
     }
-
+    } catch (error: any) {
+      console.error("==== 4. processarParticipante - Error :", error);
+    }
   }
 
   public static getInstance(): DataBaseForGauge {
     if (!DataBaseForGauge.instance) {
-        DataBaseForGauge.instance = new DataBaseForGauge();
-        (window as any).dataBaseForGauge = DataBaseForGauge.instance; // Mantém no window para compatibilidade com código antigo
-        console.log("==== 6. getInstance -> Instancia criada no getInstance")
-    }else{
-        console.log("==== 7. getInstance -> Instancia já existia no getInstance")
+      DataBaseForGauge.instance = new DataBaseForGauge();
+      (window as any).dataBaseForGauge = DataBaseForGauge.instance; // Mantém no window para compatibilidade com código antigo
+      console.log("==== 6. getInstance -> Instancia criada no getInstance")
+    } else {
+      console.log("==== 7. getInstance -> Instancia já existia no getInstance")
     }
     return DataBaseForGauge.instance;
   }
