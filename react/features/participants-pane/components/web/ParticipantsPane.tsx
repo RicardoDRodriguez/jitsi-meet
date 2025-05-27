@@ -227,7 +227,7 @@ const useStyles = makeStyles()(theme => {
 
 const ParticipantsPane = () => {
     const { classes, cx } = useStyles();
-    const paneOpen = true; // useSelector(getParticipantsPaneOpen);
+    const paneOpen = useSelector(getParticipantsPaneOpen);
     const isBreakoutRoomsSupported = useSelector((state: IReduxState) => state['features/base/conference'])
         .conference?.getBreakoutRooms()?.isSupported();
 
@@ -238,7 +238,7 @@ const ParticipantsPane = () => {
     const dispatch = useDispatch();
     const { t } = useTranslation();
 
-    const [contextOpen, setContextOpen] = useState(false);
+    const [contextOpen, setContextOpen] = useState(true);
     const [searchString, setSearchString] = useState('');
 
 
