@@ -39,7 +39,7 @@ const CustomTooltipWithTable = ({ participante, children }: CustomTooltipWithTab
                 padding: '12px 18px',  // Reduzido de 16px 24px
                 fontSize: '0.875rem', // Reduzido de 1rem (tamanho original)
                 lineHeight: '1.4',     // Ajustado
-                minWidth: '100px'      // Reduzido de 120px
+                minWidth: '400px'      // Reduzido de 120px
               },
               '& .MuiTableRow-root': {
                 height: '48px'         // Reduzido de 60px
@@ -56,8 +56,8 @@ const CustomTooltipWithTable = ({ participante, children }: CustomTooltipWithTab
                 }}>
                   <TableCell sx={{ minWidth: '120px' }}>Saída</TableCell>  {/* Reduzido */}
                   <TableCell sx={{ minWidth: '120px' }}>Retorno</TableCell>
+                  <TableCell sx={{ minWidth: '140px' }}>Tempo Fala</TableCell>
                   <TableCell sx={{ minWidth: '140px' }}>Tempo Fora</TableCell>
-                  <TableCell sx={{ minWidth: '140px' }}>Tempo de Fala</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -74,14 +74,15 @@ const CustomTooltipWithTable = ({ participante, children }: CustomTooltipWithTab
                     <TableCell>{saida.horaSaida}</TableCell>
                     <TableCell>{saida.horaRetorno}</TableCell>
                     <TableCell>
+                      {saida.tempoDeFala ? saida.tempoDeFala : "--"}
+                    </TableCell>
+                    <TableCell>
                       {saida.horarioDeRetorno
                         ? calcularTempoFora(saida.horarioDeSaida, saida.horarioDeRetorno)
                         : "--"
                       }
                     </TableCell>
-                    <TableCell>
-                      {saida.tempoDeFala ? saida.tempoDeFala : "--"}
-                    </TableCell>
+
                   </TableRow>
                 ))}
               </TableBody>
