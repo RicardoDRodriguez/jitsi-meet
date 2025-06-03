@@ -109,7 +109,8 @@ class DataBaseForGauge {
                 participante.saidas ? participante.saidas.length + 1 : 1,
                 Date.now(), getHorarioAtual(),'--',
                 participante.id,
-                participante.tempoDeFala
+                participante.tempoDeFala,
+                participante.entradaNaSala
               );
               participante.isOut = true;
               participante.isReturned = false;
@@ -299,7 +300,15 @@ class DataBaseForGauge {
 
       console.log(`==== 1. getParticipantes  --> total de tempo de fala ${totalTempoDeFalaEmMinutos}: `);
       DataBaseForGauge.participantes.forEach((participante) => {
-        participante.percentualAcumuloFala = (participante.tempoDeFala / totalTempoDeFalaEmMinutos) * 100;
+        const saidas: any = participante.saidas;
+        let ultimaSaida = 0;
+        if (saidas && saidas.length > 0) {
+          ultimaSaida = saidas[saidas.length - 1].tempoDeFala;
+          participante.entradaNaSala = saidas[saidas.length - 1].horarioDeEntrada
+        }
+        participante.tempoDeFala += ultimaSaida // Soma o valor acumulado do tempo de fala anterior com o tempo atual
+        participante.entradaNaSala =  
+        participante.percentualAcumuloFala = ((participante.tempoDeFala+ultimaSaida) / totalTempoDeFalaEmMinutos) * 100;
       });
 
       const participantesOrdenadosDescrescente = DataBaseForGauge.participantes.slice().sort((a, b) => b.percentualAcumuloFala - a.percentualAcumuloFala);
