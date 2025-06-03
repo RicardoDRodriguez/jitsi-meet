@@ -115,7 +115,7 @@ class DataBaseForGauge {
               participante.isReturned = false;
               participante.saidas = participante.saidas || [];
               participante.saidas.push(saida);
-              console.log('==== 0. ClearData = Saida incluida:',participante.saidas);
+              console.log('==== 99. ClearData = Saida incluida:',participante.saidas);
             }
             // Caso 4: JÁ ESTAVA FORA (não faz nada)
           }
