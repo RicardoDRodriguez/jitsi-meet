@@ -33,6 +33,7 @@ class DataBaseForGauge {
   public getParticipantNames(): IChaveDataBase[] {
     try {
     const sortedParticipantIds: any[] = getSortedParticipantIds(DataBaseForGauge.state);
+    console.log("==== 1. ClearData = SortedParticipantsId",sortedParticipantIds);
     const nomesChave: IChaveDataBase[] = [];
     let chave: IChaveDataBase;
 
