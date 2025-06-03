@@ -94,7 +94,6 @@ class DataBaseForGauge {
               if (participante.saidas?.length) {
                 participante.saidas[participante.saidas.length - 1].horarioDeRetorno = Date.now();
                 participante.saidas[participante.saidas.length - 1].horaRetorno = getHorarioAtual();
-                participante.saidas[participante.saidas.length - 1].tempoDeFala= participante.tempoDeFala;
               }
             } else {
               // Caso 2: Participante NUNCA SAIU (mantém isOut=false)
@@ -107,7 +106,9 @@ class DataBaseForGauge {
               // Caso 3: NOVA SAÍDA (não estava isOut=true)
               const saida = new Saida(
                 participante.saidas ? participante.saidas.length + 1 : 1,
-                Date.now(), getHorarioAtual()
+                Date.now(), getHorarioAtual(),'--',
+                participante.id,
+                participante.tempoDeFala
               );
               participante.isOut = true;
               participante.isReturned = false;

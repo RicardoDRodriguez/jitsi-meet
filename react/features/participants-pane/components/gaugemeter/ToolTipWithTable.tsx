@@ -74,7 +74,7 @@ const CustomTooltipWithTable = ({ participante, children }: CustomTooltipWithTab
                     <TableCell>{saida.horaSaida}</TableCell>
                     <TableCell>{saida.horaRetorno}</TableCell>
                     <TableCell>
-                      {saida.tempoDeFala ? saida.tempoDeFala : "--"}
+                      {saida.tempoDeFala}
                     </TableCell>
                     <TableCell>
                       {saida.horarioDeRetorno

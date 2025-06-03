@@ -20,6 +20,7 @@ console.log(saida.horarioDeRetorno); // Saída: 1700
 
 class Saida {
   private _sequencia: number = 0;
+  private _id: string;
   private _horarioDeSaida: number = 0;
   private _horarioDeRetorno: number = 0;
   private _horaSaida: string;
@@ -30,13 +31,18 @@ class Saida {
     sequencia: number = 0,
     horarioDeSaida: number = 0,
     horaSaida:string='--',
-    horaRetorno:string='--'
+    horaRetorno:string='--',
+    id:string='--',
+    tempoDeFala: number=0,
+
   ) {
     this._sequencia = sequencia;
     this._horarioDeSaida = horarioDeSaida;
     this._horarioDeRetorno = 0;
     this._horaSaida = horaSaida;
     this._horaRetorno = horaRetorno;
+    this._id = id;
+    this._tempoDeFala = tempoDeFala;
   }
 
   // Métodos get e set para o campo 'sequencia'
@@ -47,6 +53,16 @@ class Saida {
   set sequencia(value: number) {
     this._sequencia = value;
   }
+
+ // Métodos get e set para o campo 'id'
+  get id(): string {
+    return this._id;
+  }
+
+  set id(value: string) {
+    this._id = value;
+  }
+
 
   // Métodos get e set para o campo 'horaSaida'
   get horaSaida(): string {
@@ -78,6 +94,10 @@ class Saida {
   get horarioDeRetorno(): number {
     return this._horarioDeRetorno;
   }
+  
+  set horarioDeRetorno(value: number) {
+    this._horarioDeRetorno = value;
+  }
 
   set tempoDeFala(value: number) {
     this._tempoDeFala = value;
@@ -85,10 +105,6 @@ class Saida {
     // Métodos get e set para o campo 'tempoDeFala'
   get tempoDeFala(): number {
     return this._tempoDeFala;
-  }
-
-  set horarioDeRetorno(value: number) {
-    this._horarioDeRetorno = value;
   }
 }
 
