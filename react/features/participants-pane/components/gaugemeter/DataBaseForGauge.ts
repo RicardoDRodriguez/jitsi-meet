@@ -9,6 +9,7 @@ import { getRoomName } from "../../../base/conference/functions";
 import Saida from "./Saida";
 import { forEach } from "lodash-es";
 import { getHorarioAtual } from "./TimeUtils";
+import { participantPresenceChanged } from "../../../base/participants/actions";
 
 interface IChaveDataBase {
   key: any;        // Chave do campo
@@ -114,6 +115,7 @@ class DataBaseForGauge {
               participante.isReturned = false;
               participante.saidas = participante.saidas || [];
               participante.saidas.push(saida);
+              console.log('==== 0. ClearData = Saida incluida:',participante.saidas);
             }
             // Caso 4: JÁ ESTAVA FORA (não faz nada)
           }
