@@ -94,6 +94,7 @@ class DataBaseForGauge {
               if (participante.saidas?.length) {
                 participante.saidas[participante.saidas.length - 1].horarioDeRetorno = Date.now();
                 participante.saidas[participante.saidas.length - 1].horaRetorno = getHorarioAtual();
+                participante.saidas[participante.saidas.length - 1].tempoDeFala= participante.tempoDeFala;
               }
             } else {
               // Caso 2: Participante NUNCA SAIU (mantém isOut=false)

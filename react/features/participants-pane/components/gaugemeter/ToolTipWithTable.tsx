@@ -57,6 +57,7 @@ const CustomTooltipWithTable = ({ participante, children }: CustomTooltipWithTab
                   <TableCell sx={{ minWidth: '120px' }}>Saída</TableCell>  {/* Reduzido */}
                   <TableCell sx={{ minWidth: '120px' }}>Retorno</TableCell>
                   <TableCell sx={{ minWidth: '140px' }}>Tempo Fora</TableCell>
+                  <TableCell sx={{ minWidth: '140px' }}>Tempo de Fala</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -77,6 +78,9 @@ const CustomTooltipWithTable = ({ participante, children }: CustomTooltipWithTab
                         ? calcularTempoFora(saida.horarioDeSaida, saida.horarioDeRetorno)
                         : "--"
                       }
+                    </TableCell>
+                    <TableCell>
+                      {saida.tempoDeFala ? saida.tempoDeFala : "--"}
                     </TableCell>
                   </TableRow>
                 ))}
