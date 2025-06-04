@@ -307,7 +307,6 @@ class DataBaseForGauge {
           participante.entradaNaSala = saidas[saidas.length - 1].horarioDeEntrada
         }
         participante.tempoDeFala += ultimaSaida // Soma o valor acumulado do tempo de fala anterior com o tempo atual
-        participante.entradaNaSala =  
         participante.percentualAcumuloFala = ((participante.tempoDeFala+ultimaSaida) / totalTempoDeFalaEmMinutos) * 100;
       });
 
