@@ -8,15 +8,21 @@ import { ISpeaker } from "../../../speaker-stats/reducer";
 import { getRoomName } from "../../../base/conference/functions";
 import Saida from "./Saida";
 import { forEach } from "lodash-es";
-import { getHorarioAtual } from "./TimeUtils";
+import { formatTimeFromMilliseconds, getHorarioAtual } from "./TimeUtils";
 import { participantPresenceChanged } from "../../../base/participants/actions";
+import Cookies from 'js-cookie';
+
 
 interface IChaveDataBase {
   key: any;        // Chave do campo
   nomeChave: any; // Campo obrigatório (não opcional)
 }
 
+const LISTA_PARTICIPANTES_COOKIE_KEY = 'listaParticipantesCookie';
+
+
 class DataBaseForGauge {
+
 
   static participantes: Participante[] = [];
   static state: IReduxState;
@@ -25,52 +31,146 @@ class DataBaseForGauge {
   static roomStarted: number;
   private static instance: DataBaseForGauge | null = null;
 
+
+
   private constructor() {
     // Inicialização da classe (se necessário)
     console.log("==== 0. ClearData = construtor do DataBaseForGauge chamado.");
   }
 
 
+
+const obterParticipantePorNomeESalaDaListaNoCookie = (
+  nomeProcurado: string,
+  salaProcurada: string
+): Participante | null => {
+  const listaJSON = Cookies.get(LISTA_PARTICIPANTES_COOKIE_KEY);
+
+  if (listaJSON) {
+    try {
+      const listaDadosParticipantes: any[] = JSON.parse(listaJSON);
+      if (!Array.isArray(listaDadosParticipantes)) {
+          console.error('Formato inválido no cookie, não é um array.');
+          Cookies.remove(LISTA_PARTICIPANTES_COOKIE_KEY);
+          return null;
+      }
+
+      // 1. Filtrar todos os participantes que correspondem ao nome e sala
+      const correspondentesCompletos = listaDadosParticipantes.filter(
+        p => p.displayName === nomeProcurado && p.sala === salaProcurada
+      );
+
+      if (correspondentesCompletos.length === 0) {
+        console.log(`Nenhum participante "${nomeProcurado}" na sala "${salaProcurada}" encontrado.`);
+        return null;
+      }
+
+      // 2. Ordenar por entradaNaSala (mais recente primeiro) para identificar o principal
+      correspondentesCompletos.sort((a, b) => (b.entradaNaSala || 0) - (a.entradaNaSala || 0));
+
+      const dadosParticipantePrincipal = correspondentesCompletos[0];
+      const dadosParticipantesAnteriores = correspondentesCompletos.slice(1);
+
+      // 3. Construir objetos Saida para os registros anteriores
+      const arrayDeSaidas: Saida[] = [];
+      dadosParticipantesAnteriores.forEach((dadosAnterior, index) => {
+        // Calcular horário de saída da sessão anterior.
+        // Usar entradaNaSala + tempoPresenca. Se tempoPresenca não for confiável,
+        // pode usar timeoutMeet do dadosAnterior, ou outro campo relevante.
+        let horarioDeSaidaAnterior = 0;
+        if (dadosAnterior.entradaNaSala && dadosAnterior.tempoPresenca) {
+            horarioDeSaidaAnterior = dadosAnterior.entradaNaSala + dadosAnterior.tempoPresenca;
+        } else if (dadosAnterior.timeoutMeet) { // Fallback para timeoutMeet
+            horarioDeSaidaAnterior = dadosAnterior.timeoutMeet;
+        }
+        
+        const saida = new Saida(
+          index + 1, // Sequência
+          horarioDeSaidaAnterior,
+          formatTimeFromMilliseconds(horarioDeSaidaAnterior), // horaSaida formatada
+          dadosAnterior.horaRetorno, // horaRetorno (não aplicável para histórico consolidado)
+          dadosAnterior.id, // ID da sessão/participante anterior
+          dadosAnterior.tempoDeFala || 0,
+          dadosAnterior.entradaNaSala || 0
+        );
+        arrayDeSaidas.push(saida);
+      });
+
+      // 4. Instanciar o Participante principal
+      const participantePrincipal = new Participante(
+        dadosParticipantePrincipal.id,
+        dadosParticipantePrincipal.sala,
+        dadosParticipantePrincipal.displayName,
+        dadosParticipantePrincipal.avatarURL,
+        dadosParticipantePrincipal.entradaNaSala,
+        dadosParticipantePrincipal.tempoDeFala,
+        dadosParticipantePrincipal.tempoPresenca
+      );
+
+      // 5. Atribuir todas as propriedades e o array de Saidas
+      Object.assign(participantePrincipal, dadosParticipantePrincipal); // Copia todas as outras props
+      participantePrincipal.saidas = arrayDeSaidas; // Atribui o histórico
+
+      console.log(`Participante "${nomeProcurado}" na sala "${salaProcurada}" (principal) encontrado:`, participantePrincipal);
+      if (arrayDeSaidas.length > 0) {
+        console.log('Dados de IDs anteriores consolidados em "saidas":', arrayDeSaidas);
+      }
+      return participantePrincipal;
+
+    } catch (error) {
+      console.error('Erro ao processar lista de participantes do cookie:', error);
+      Cookies.remove(LISTA_PARTICIPANTES_COOKIE_KEY); // Cookie pode estar corrompido
+      return null;
+    }
+  }
+  console.log(`Nenhuma lista de participantes encontrada no cookie com a chave: ${LISTA_PARTICIPANTES_COOKIE_KEY}`);
+  return null;
+};
+
   public getParticipantNames(): IChaveDataBase[] {
     try {
-    const sortedParticipantIds: any[] = getSortedParticipantIds(DataBaseForGauge.state);
-    console.log("==== 1. ClearData = SortedParticipantsId",sortedParticipantIds);
-    const nomesChave: IChaveDataBase[] = [];
-    let chave: IChaveDataBase;
+      const sortedParticipantIds: any[] = getSortedParticipantIds(DataBaseForGauge.state);
+      console.log("==== 1. ClearData = SortedParticipantsId", sortedParticipantIds);
+      const nomesChave: IChaveDataBase[] = [];
+      let chave: IChaveDataBase;
 
-    // Processa participantes remotos
-    sortedParticipantIds.forEach((id: string) => {
-      const user = APP.conference.getParticipantById(id);
-      console.log("==== 1. ClearData = Varrendo Ids", id, user);
-      if (user) {
+      // Processa participantes remotos
+      sortedParticipantIds.forEach((id: string) => {
+        const user = APP.conference.getParticipantById(id);
+        console.log("==== 1. ClearData = Varrendo Ids", id, user);
+        if (user) {
+          nomesChave.push({
+            key: id,
+            nomeChave: user.getDisplayName()
+          });
+        }
+
+      });
+
+      // Processa participante local
+      const localUser = getLocalParticipant(DataBaseForGauge.state);
+      if (localUser) {
         nomesChave.push({
-          key: id,
-          nomeChave: user.getDisplayName()
+          key: localUser.id,
+          nomeChave: localUser.name
         });
       }
-   
-    });
-
-    // Processa participante local
-    const localUser = getLocalParticipant(DataBaseForGauge.state);
-    if (localUser) {
-      nomesChave.push({
-        key: localUser.id,
-        nomeChave: localUser.name
-      });
-    }
-    console.log("==== 3. ClearData = nomesChave", nomesChave);
-    return nomesChave;
-     } catch (error:any) {
-        console.log('==== 2. ClearData = erro encontrado', error.message);
-        return [];
+      console.log("==== 3. ClearData = nomesChave", nomesChave);
+      return nomesChave;
+    } catch (error: any) {
+      console.log('==== 2. ClearData = erro encontrado', error.message);
+      return [];
     }
   }
 
+
+  
   /**
    * Atualiza os participantes ativando ou desativando conforme suas ações !
    */
 
+
+  
   async clearData(): Promise<void> {
     try {
       const atualizarStatusParticipantes = () => {
@@ -107,7 +207,7 @@ class DataBaseForGauge {
               // Caso 3: NOVA SAÍDA (não estava isOut=true)
               const saida = new Saida(
                 participante.saidas ? participante.saidas.length + 1 : 1,
-                Date.now(), getHorarioAtual(),'--',
+                Date.now(), getHorarioAtual(), '--',
                 participante.id,
                 participante.tempoDeFala,
                 participante.entradaNaSala
@@ -116,7 +216,7 @@ class DataBaseForGauge {
               participante.isReturned = false;
               participante.saidas = participante.saidas || [];
               participante.saidas.push(saida);
-              console.log('==== 99. ClearData = Saida incluida:',participante.saidas);
+              console.log('==== 99. ClearData = Saida incluida:', participante.saidas);
             }
             // Caso 4: JÁ ESTAVA FORA (não faz nada)
           }
@@ -307,7 +407,7 @@ class DataBaseForGauge {
           participante.entradaNaSala = saidas[saidas.length - 1].horarioDeEntrada
         }
         participante.tempoDeFala += ultimaSaida // Soma o valor acumulado do tempo de fala anterior com o tempo atual
-        participante.percentualAcumuloFala = ((participante.tempoDeFala+ultimaSaida) / totalTempoDeFalaEmMinutos) * 100;
+        participante.percentualAcumuloFala = ((participante.tempoDeFala + ultimaSaida) / totalTempoDeFalaEmMinutos) * 100;
       });
 
       const participantesOrdenadosDescrescente = DataBaseForGauge.participantes.slice().sort((a, b) => b.percentualAcumuloFala - a.percentualAcumuloFala);
@@ -447,6 +547,9 @@ class DataBaseForGauge {
       console.error("==== 11. CalcularGini - Error calculating Gini index:", error);
       return 0;
     }
+
+
+
   }
 
   async calcularMediaTempoDeFala(): Promise<number> {
@@ -471,70 +574,136 @@ class DataBaseForGauge {
 
   async processarParticipante(key: string, room: string): Promise<void> {
     try {
-    console.log(` ==== 1. processarParticipante --> Processando chave: ${key} no foreach em processarParticipante ===`);
-    const now = new Date().getTime()
+      console.log(` ==== 1. processarParticipante --> Processando chave: ${key} no foreach em processarParticipante ===`);
+      const now = new Date().getTime()
+      /**
+       * Salva um novo participante na lista no cookie ou atualiza um existente.
+       * A identificação é feita pelo campo 'id' do participante.
+       * @param participanteParaSalvar O objeto Participante a ser salvo ou atualizado.
+       */
+      //
+      const salvarOuAtualizarParticipanteNaListaNoCookie = (
+        participanteParaSalvar: Participante // Pode ser também um objeto com a estrutura de Participante
+      ): void => {
+        // 1. Recuperar a lista atual de participantes do cookie
+        const listaJSON = Cookies.get(LISTA_PARTICIPANTES_COOKIE_KEY);
+        let listaParticipantes: Participante[] = []; // Use o tipo Participante ou any se preferir
 
-    const atualizarParticipante = (idkey: any, participante: Participante, stats: ISpeaker, now: number) => {
-      participante.id = idkey;
-      participante.tempoDeFala = stats.getTotalDominantSpeakerTime() ?? participante.tempoDeFala;
-      participante.tempoPresenca = now - participante.entradaNaSala;
-      participante.fatorTempoPresenca = 0;
-      participante.fatorAcumuladoCurvaLorenz = 0;
-      console.log(`==== 6. processarParticipante  --> participante atualizado ${participante.id}: `, participante);
-    };
+        if (listaJSON) {
+          try {
+            listaParticipantes = JSON.parse(listaJSON);
+            // É uma boa prática garantir que seja um array
+            if (!Array.isArray(listaParticipantes)) {
+              console.warn('Conteúdo do cookie não era um array. Iniciando com lista vazia.');
+              listaParticipantes = [];
+            }
+          } catch (error) {
+            console.error('Erro ao parsear lista de participantes do cookie:', error);
+            // Se houver erro, podemos optar por começar com uma lista vazia
+            // ou remover o cookie corrompido.
+            listaParticipantes = [];
+            Cookies.remove(LISTA_PARTICIPANTES_COOKIE_KEY);
+          }
+        }
 
-    const adicionarParticipante = (participante: Participante, stats: ISpeaker, partic: IParticipant) => {
-      const user = APP.conference.getParticipantById(partic.id);
-
-      console.log(`==== 1. processarParticipante  --> partic : `, partic);
-      console.log(`==== 2. processarParticipante  --> stats : `, stats);
-      console.log(`==== 3. processarParticipante  -->. user: `, user);
-
-      const novoParticipante = {
-        ...participante,
-        id: partic.id,
-        tempoDeFala: stats.getTotalDominantSpeakerTime() ?? participante.tempoDeFala,
-        entradaNaSala: partic.userStartTime ?? user.userStartTime,
-        tempoPresenca: 0,
-        avatarURL: partic.avatarURL ?? participante.avatarURL,
-        displayName: partic.displayName ?? participante.displayName,
-        name: partic.name ?? participante.name,
-        role: partic.role ?? participante.role,
-        dominantSpeaker: partic.dominantSpeaker ?? participante.dominantSpeaker,
-        fatorTempoPresenca: 0,
-        fatorAcumuladoCurvaLorenz: 0
-      };
-
-      console.log(`==== 4. processarParticipante  --> novo participante ${novoParticipante.id}: `, novoParticipante);
-
-
-      DataBaseForGauge.participantes.push(novoParticipante);
-    };
-    const sortedParticipantsKey: IChaveDataBase[] = this.getParticipantNames();
-    for (const nomeChave of sortedParticipantsKey) {
-      const partic: IParticipant | undefined = getParticipantById(DataBaseForGauge.state, nomeChave.key);
-      console.log(`==== 4. processarParticipante --> IPArticipant encontrado: `, partic);
-      if (partic) {
-        const speakerStats = DataBaseForGauge.conference.getSpeakerStats();
-        const now = new Date().getTime();
-
-        // Verifica se o indivíduo existe
-        console.log(`==== 4. processarParticipante --> sortedParticipantsKey: `, sortedParticipantsKey);
-        const existingParticipant = DataBaseForGauge.participantes.find(
-          (participante) => nomeChave.nomeChave === participante.name
+        // 2. Verificar se o participante já existe na lista (pelo id)
+        const indiceExistente = listaParticipantes.findIndex(
+          (p) => p.id === participanteParaSalvar.id
         );
 
-        const stats = speakerStats[nomeChave.key]; // Changed 'key' to 'nomeChave.key'
-        if (existingParticipant) {
-          // Atualizar dados de participante
-          atualizarParticipante(nomeChave.key, existingParticipant, stats, now);
+        // 3. Se existir, atualizar. Se não, adicionar.
+        if (indiceExistente !== -1) {
+          // Participante existe, então atualiza
+          listaParticipantes[indiceExistente] = participanteParaSalvar;
+          console.log(`Participante com ID "${participanteParaSalvar.id}" atualizado na lista.`);
         } else {
-          const participante: Participante = new Participante(nomeChave.key, room);
-          // Adicionar participante
-          adicionarParticipante(participante, stats, partic);
+          // Participante não existe, então adiciona
+          listaParticipantes.push(participanteParaSalvar);
+          console.log(`Participante com ID "${participanteParaSalvar.id}" adicionado à lista.`);
+        }
+
+        // 4. Salvar a lista modificada de volta no cookie
+        try {
+          Cookies.set(LISTA_PARTICIPANTES_COOKIE_KEY, JSON.stringify(listaParticipantes), {
+            expires: 7, // Define a expiração do cookie (ex: 7 dias)
+          });
+          console.log('Lista de participantes salva no cookie.');
+        } catch (error) {
+          console.error('Erro ao salvar lista de participantes no cookie:', error);
+          // Aqui você pode querer tratar o erro, por exemplo, se a lista for muito grande.
+        }
+      };
+
+
+      const atualizarParticipante = (idkey: any, participante: Participante, stats: ISpeaker, now: number) => {
+        participante.id = idkey;
+        participante.tempoDeFala = stats.getTotalDominantSpeakerTime() ?? participante.tempoDeFala;
+        participante.tempoPresenca = now - participante.entradaNaSala;
+        participante.fatorTempoPresenca = 0;
+        participante.fatorAcumuladoCurvaLorenz = 0;
+        salvarOuAtualizarParticipanteNaListaNoCookie(participante);
+        console.log(`==== 6. processarParticipante  --> participante atualizado ${participante.id}: `, participante);
+      };
+
+
+      const adicionarParticipante = (participante: Participante, stats: ISpeaker, partic: IParticipant) => {
+        const user = APP.conference.getParticipantById(partic.id);
+        console.log(`==== 1. processarParticipante  --> partic : `, partic);
+        console.log(`==== 2. processarParticipante  --> stats : `, stats);
+        console.log(`==== 3. processarParticipante  -->. user: `, user);
+
+        const novoParticipante = {
+          ...participante,
+          id: partic.id,
+          tempoDeFala: stats.getTotalDominantSpeakerTime() ?? participante.tempoDeFala,
+          entradaNaSala: partic.userStartTime ?? user.userStartTime,
+          tempoPresenca: 0,
+          avatarURL: partic.avatarURL ?? participante.avatarURL,
+          displayName: partic.displayName ?? participante.displayName,
+          name: partic.name ?? participante.name,
+          role: partic.role ?? participante.role,
+          dominantSpeaker: partic.dominantSpeaker ?? participante.dominantSpeaker,
+          fatorTempoPresenca: 0,
+          fatorAcumuladoCurvaLorenz: 0
+        };
+
+        console.log(`==== 4. processarParticipante  --> novo participante ${novoParticipante.id}: `, novoParticipante);
+
+        /**
+         * Salva o participante em um cookie no computador local
+         */
+        salvarOuAtualizarParticipanteNaListaNoCookie(novoParticipante);
+        /*----------------------------------------*/
+
+        DataBaseForGauge.participantes.push(novoParticipante);
+      };
+
+
+      const sortedParticipantsKey: IChaveDataBase[] = this.getParticipantNames();
+      for (const nomeChave of sortedParticipantsKey) {
+        const partic: IParticipant | undefined = getParticipantById(DataBaseForGauge.state, nomeChave.key);
+        console.log(`==== 4. processarParticipante --> IPArticipant encontrado: `, partic);
+        if (partic) {
+          const speakerStats = DataBaseForGauge.conference.getSpeakerStats();
+          const now = new Date().getTime();
+
+          // Verifica se o indivíduo existe
+          console.log(`==== 4. processarParticipante --> sortedParticipantsKey: `, sortedParticipantsKey);
+          const existingParticipant = DataBaseForGauge.participantes.find(
+            (participante) => nomeChave.nomeChave === participante.name
+          );
+
+          const stats = speakerStats[nomeChave.key]; // Changed 'key' to 'nomeChave.key'
+          if (existingParticipant) {
+            // Atualizar dados de participante
+            atualizarParticipante(nomeChave.key, existingParticipant, stats, now);
+          } else {
+            const participante: Participante = new Participante(nomeChave.key, room);
+            // Adicionar participante
+            adicionarParticipante(participante, stats, partic);
+          }
         }
       }
-    }
     } catch (error: any) {
       console.error("==== 4. processarParticipante - Error :", error);
     }
