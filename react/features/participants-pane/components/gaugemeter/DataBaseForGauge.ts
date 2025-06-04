@@ -40,92 +40,92 @@ class DataBaseForGauge {
 
 
 
-const obterParticipantePorNomeESalaDaListaNoCookie = (
-  nomeProcurado: string,
-  salaProcurada: string
-): Participante | null => {
-  const listaJSON = Cookies.get(LISTA_PARTICIPANTES_COOKIE_KEY);
+  static obterParticipantePorNomeESalaDaListaNoCookie = (
+    nomeProcurado: string,
+    salaProcurada: string
+  ): Participante | null => {
+    const listaJSON = Cookies.get(LISTA_PARTICIPANTES_COOKIE_KEY);
 
-  if (listaJSON) {
-    try {
-      const listaDadosParticipantes: any[] = JSON.parse(listaJSON);
-      if (!Array.isArray(listaDadosParticipantes)) {
+    if (listaJSON) {
+      try {
+        const listaDadosParticipantes: any[] = JSON.parse(listaJSON);
+        if (!Array.isArray(listaDadosParticipantes)) {
           console.error('Formato inválido no cookie, não é um array.');
           Cookies.remove(LISTA_PARTICIPANTES_COOKIE_KEY);
           return null;
-      }
+        }
 
-      // 1. Filtrar todos os participantes que correspondem ao nome e sala
-      const correspondentesCompletos = listaDadosParticipantes.filter(
-        p => p.displayName === nomeProcurado && p.sala === salaProcurada
-      );
+        // 1. Filtrar todos os participantes que correspondem ao nome e sala
+        const correspondentesCompletos = listaDadosParticipantes.filter(
+          p => p.displayName === nomeProcurado && p.sala === salaProcurada
+        );
 
-      if (correspondentesCompletos.length === 0) {
-        console.log(`Nenhum participante "${nomeProcurado}" na sala "${salaProcurada}" encontrado.`);
+        if (correspondentesCompletos.length === 0) {
+          console.log(`Nenhum participante "${nomeProcurado}" na sala "${salaProcurada}" encontrado.`);
+          return null;
+        }
+
+        // 2. Ordenar por entradaNaSala (mais recente primeiro) para identificar o principal
+        correspondentesCompletos.sort((a, b) => (b.entradaNaSala || 0) - (a.entradaNaSala || 0));
+
+        const dadosParticipantePrincipal = correspondentesCompletos[0];
+        const dadosParticipantesAnteriores = correspondentesCompletos.slice(1);
+
+        // 3. Construir objetos Saida para os registros anteriores
+        const arrayDeSaidas: Saida[] = [];
+        dadosParticipantesAnteriores.forEach((dadosAnterior, index) => {
+          // Calcular horário de saída da sessão anterior.
+          // Usar entradaNaSala + tempoPresenca. Se tempoPresenca não for confiável,
+          // pode usar timeoutMeet do dadosAnterior, ou outro campo relevante.
+          let horarioDeSaidaAnterior = 0;
+          if (dadosAnterior.entradaNaSala && dadosAnterior.tempoPresenca) {
+            horarioDeSaidaAnterior = dadosAnterior.entradaNaSala + dadosAnterior.tempoPresenca;
+          } else if (dadosAnterior.timeoutMeet) { // Fallback para timeoutMeet
+            horarioDeSaidaAnterior = dadosAnterior.timeoutMeet;
+          }
+
+          const saida = new Saida(
+            index + 1, // Sequência
+            horarioDeSaidaAnterior,
+            formatTimeFromMilliseconds(horarioDeSaidaAnterior), // horaSaida formatada
+            dadosAnterior.horaRetorno, // horaRetorno (não aplicável para histórico consolidado)
+            dadosAnterior.id, // ID da sessão/participante anterior
+            dadosAnterior.tempoDeFala || 0,
+            dadosAnterior.entradaNaSala || 0
+          );
+          arrayDeSaidas.push(saida);
+        });
+
+        // 4. Instanciar o Participante principal
+        const participantePrincipal = new Participante(
+          dadosParticipantePrincipal.id,
+          dadosParticipantePrincipal.sala,
+          dadosParticipantePrincipal.displayName,
+          dadosParticipantePrincipal.avatarURL,
+          dadosParticipantePrincipal.entradaNaSala,
+          dadosParticipantePrincipal.tempoDeFala,
+          dadosParticipantePrincipal.tempoPresenca
+        );
+
+        // 5. Atribuir todas as propriedades e o array de Saidas
+        Object.assign(participantePrincipal, dadosParticipantePrincipal); // Copia todas as outras props
+        participantePrincipal.saidas = arrayDeSaidas; // Atribui o histórico
+
+        console.log(`Participante "${nomeProcurado}" na sala "${salaProcurada}" (principal) encontrado:`, participantePrincipal);
+        if (arrayDeSaidas.length > 0) {
+          console.log('Dados de IDs anteriores consolidados em "saidas":', arrayDeSaidas);
+        }
+        return participantePrincipal;
+
+      } catch (error) {
+        console.error('Erro ao processar lista de participantes do cookie:', error);
+        Cookies.remove(LISTA_PARTICIPANTES_COOKIE_KEY); // Cookie pode estar corrompido
         return null;
       }
-
-      // 2. Ordenar por entradaNaSala (mais recente primeiro) para identificar o principal
-      correspondentesCompletos.sort((a, b) => (b.entradaNaSala || 0) - (a.entradaNaSala || 0));
-
-      const dadosParticipantePrincipal = correspondentesCompletos[0];
-      const dadosParticipantesAnteriores = correspondentesCompletos.slice(1);
-
-      // 3. Construir objetos Saida para os registros anteriores
-      const arrayDeSaidas: Saida[] = [];
-      dadosParticipantesAnteriores.forEach((dadosAnterior, index) => {
-        // Calcular horário de saída da sessão anterior.
-        // Usar entradaNaSala + tempoPresenca. Se tempoPresenca não for confiável,
-        // pode usar timeoutMeet do dadosAnterior, ou outro campo relevante.
-        let horarioDeSaidaAnterior = 0;
-        if (dadosAnterior.entradaNaSala && dadosAnterior.tempoPresenca) {
-            horarioDeSaidaAnterior = dadosAnterior.entradaNaSala + dadosAnterior.tempoPresenca;
-        } else if (dadosAnterior.timeoutMeet) { // Fallback para timeoutMeet
-            horarioDeSaidaAnterior = dadosAnterior.timeoutMeet;
-        }
-        
-        const saida = new Saida(
-          index + 1, // Sequência
-          horarioDeSaidaAnterior,
-          formatTimeFromMilliseconds(horarioDeSaidaAnterior), // horaSaida formatada
-          dadosAnterior.horaRetorno, // horaRetorno (não aplicável para histórico consolidado)
-          dadosAnterior.id, // ID da sessão/participante anterior
-          dadosAnterior.tempoDeFala || 0,
-          dadosAnterior.entradaNaSala || 0
-        );
-        arrayDeSaidas.push(saida);
-      });
-
-      // 4. Instanciar o Participante principal
-      const participantePrincipal = new Participante(
-        dadosParticipantePrincipal.id,
-        dadosParticipantePrincipal.sala,
-        dadosParticipantePrincipal.displayName,
-        dadosParticipantePrincipal.avatarURL,
-        dadosParticipantePrincipal.entradaNaSala,
-        dadosParticipantePrincipal.tempoDeFala,
-        dadosParticipantePrincipal.tempoPresenca
-      );
-
-      // 5. Atribuir todas as propriedades e o array de Saidas
-      Object.assign(participantePrincipal, dadosParticipantePrincipal); // Copia todas as outras props
-      participantePrincipal.saidas = arrayDeSaidas; // Atribui o histórico
-
-      console.log(`Participante "${nomeProcurado}" na sala "${salaProcurada}" (principal) encontrado:`, participantePrincipal);
-      if (arrayDeSaidas.length > 0) {
-        console.log('Dados de IDs anteriores consolidados em "saidas":', arrayDeSaidas);
-      }
-      return participantePrincipal;
-
-    } catch (error) {
-      console.error('Erro ao processar lista de participantes do cookie:', error);
-      Cookies.remove(LISTA_PARTICIPANTES_COOKIE_KEY); // Cookie pode estar corrompido
-      return null;
     }
-  }
-  console.log(`Nenhuma lista de participantes encontrada no cookie com a chave: ${LISTA_PARTICIPANTES_COOKIE_KEY}`);
-  return null;
-};
+    console.log(`Nenhuma lista de participantes encontrada no cookie com a chave: ${LISTA_PARTICIPANTES_COOKIE_KEY}`);
+    return null;
+  };
 
   public getParticipantNames(): IChaveDataBase[] {
     try {
@@ -164,13 +164,13 @@ const obterParticipantePorNomeESalaDaListaNoCookie = (
   }
 
 
-  
+
   /**
    * Atualiza os participantes ativando ou desativando conforme suas ações !
    */
 
 
-  
+
   async clearData(): Promise<void> {
     try {
       const atualizarStatusParticipantes = () => {
