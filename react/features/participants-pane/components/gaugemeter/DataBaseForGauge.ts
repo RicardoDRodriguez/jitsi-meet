@@ -634,7 +634,6 @@ class DataBaseForGauge {
         }
       };
 
-
       const atualizarParticipante = (idkey: any, participante: Participante, stats: ISpeaker, now: number) => {
         participante.id = idkey;
         participante.tempoDeFala = stats.getTotalDominantSpeakerTime() ?? participante.tempoDeFala;
