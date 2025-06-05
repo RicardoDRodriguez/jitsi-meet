@@ -40,92 +40,83 @@ class DataBaseForGauge {
 
 
 
-  static obterParticipantePorNomeESalaDaListaNoCookie = (
-    nomeProcurado: string,
-    salaProcurada: string
-  ): Participante | null => {
-    const listaJSON = Cookies.get(LISTA_PARTICIPANTES_COOKIE_KEY);
+ static atualizarParticipanteComDadosDoCookie(participante: Participante): void {
+  const listaJSON = Cookies.get(LISTA_PARTICIPANTES_COOKIE_KEY);
 
-    if (listaJSON) {
-      try {
-        const listaDadosParticipantes: any[] = JSON.parse(listaJSON);
-        if (!Array.isArray(listaDadosParticipantes)) {
-          console.error('Formato inválido no cookie, não é um array.');
-          Cookies.remove(LISTA_PARTICIPANTES_COOKIE_KEY);
-          return null;
-        }
-
-        // 1. Filtrar todos os participantes que correspondem ao nome e sala
-        const correspondentesCompletos = listaDadosParticipantes.filter(
-          p => p.displayName === nomeProcurado && p.sala === salaProcurada
-        );
-
-        if (correspondentesCompletos.length === 0) {
-          console.log(`Nenhum participante "${nomeProcurado}" na sala "${salaProcurada}" encontrado.`);
-          return null;
-        }
-
-        // 2. Ordenar por entradaNaSala (mais recente primeiro) para identificar o principal
-        correspondentesCompletos.sort((a, b) => (b.entradaNaSala || 0) - (a.entradaNaSala || 0));
-
-        const dadosParticipantePrincipal = correspondentesCompletos[0];
-        const dadosParticipantesAnteriores = correspondentesCompletos.slice(1);
-
-        // 3. Construir objetos Saida para os registros anteriores
-        const arrayDeSaidas: Saida[] = [];
-        dadosParticipantesAnteriores.forEach((dadosAnterior, index) => {
-          // Calcular horário de saída da sessão anterior.
-          // Usar entradaNaSala + tempoPresenca. Se tempoPresenca não for confiável,
-          // pode usar timeoutMeet do dadosAnterior, ou outro campo relevante.
-          let horarioDeSaidaAnterior = 0;
-          if (dadosAnterior.entradaNaSala && dadosAnterior.tempoPresenca) {
-            horarioDeSaidaAnterior = dadosAnterior.entradaNaSala + dadosAnterior.tempoPresenca;
-          } else if (dadosAnterior.timeoutMeet) { // Fallback para timeoutMeet
-            horarioDeSaidaAnterior = dadosAnterior.timeoutMeet;
-          }
-
-          const saida = new Saida(
-            index + 1, // Sequência
-            horarioDeSaidaAnterior,
-            formatTimeFromMilliseconds(horarioDeSaidaAnterior), // horaSaida formatada
-            dadosAnterior.horaRetorno, // horaRetorno (não aplicável para histórico consolidado)
-            dadosAnterior.id, // ID da sessão/participante anterior
-            dadosAnterior.tempoDeFala || 0,
-            dadosAnterior.entradaNaSala || 0
-          );
-          arrayDeSaidas.push(saida);
-        });
-
-        // 4. Instanciar o Participante principal
-        const participantePrincipal = new Participante(
-          dadosParticipantePrincipal.id,
-          dadosParticipantePrincipal.sala,
-          dadosParticipantePrincipal.displayName,
-          dadosParticipantePrincipal.avatarURL,
-          dadosParticipantePrincipal.entradaNaSala,
-          dadosParticipantePrincipal.tempoDeFala,
-          dadosParticipantePrincipal.tempoPresenca
-        );
-
-        // 5. Atribuir todas as propriedades e o array de Saidas
-        Object.assign(participantePrincipal, dadosParticipantePrincipal); // Copia todas as outras props
-        participantePrincipal.saidas = arrayDeSaidas; // Atribui o histórico
-
-        console.log(`Participante "${nomeProcurado}" na sala "${salaProcurada}" (principal) encontrado:`, participantePrincipal);
-        if (arrayDeSaidas.length > 0) {
-          console.log('Dados de IDs anteriores consolidados em "saidas":', arrayDeSaidas);
-        }
-        return participantePrincipal;
-
-      } catch (error) {
-        console.error('Erro ao processar lista de participantes do cookie:', error);
-        Cookies.remove(LISTA_PARTICIPANTES_COOKIE_KEY); // Cookie pode estar corrompido
-        return null;
-      }
-    }
+  if (!listaJSON) {
     console.log(`Nenhuma lista de participantes encontrada no cookie com a chave: ${LISTA_PARTICIPANTES_COOKIE_KEY}`);
-    return null;
-  };
+    return; // A função agora simplesmente termina se não encontrar o cookie.
+  }
+
+  try {
+    const listaDadosParticipantes: any[] = JSON.parse(listaJSON);
+    if (!Array.isArray(listaDadosParticipantes)) {
+      console.error('Formato inválido no cookie, não é um array.');
+      Cookies.remove(LISTA_PARTICIPANTES_COOKIE_KEY);
+      return;
+    }
+
+    // 1. Filtrar usando as propriedades do objeto participante recebido
+    const correspondentesCompletos = listaDadosParticipantes.filter(
+      p => p.displayName === participante.displayName && p.sala === participante.sala
+    );
+
+    if (correspondentesCompletos.length === 0) {
+      console.log(`Nenhum participante "${participante.displayName}" na sala "${participante.sala}" encontrado no cookie.`);
+      return; // Termina se não houver correspondência.
+    }
+
+    // 2. Ordenar por entradaNaSala (mais recente primeiro) para identificar o principal
+    correspondentesCompletos.sort((a, b) => (b.entradaNaSala || 0) - (a.entradaNaSala || 0));
+
+    const dadosParticipantePrincipal = correspondentesCompletos[0];
+    const dadosParticipantesAnteriores = correspondentesCompletos.slice(1);
+
+    // 3. Construir objetos Saida para os registros anteriores (esta lógica permanece a mesma)
+    const arrayDeSaidas: Saida[] = [];
+    dadosParticipantesAnteriores.forEach((dadosAnterior, index) => {
+      let horarioDeSaidaAnterior = 0;
+      if (dadosAnterior.entradaNaSala && dadosAnterior.tempoPresenca) {
+        horarioDeSaidaAnterior = dadosAnterior.entradaNaSala + dadosAnterior.tempoPresenca;
+      } else if (dadosAnterior.timeoutMeet) {
+        horarioDeSaidaAnterior = dadosAnterior.timeoutMeet;
+      }
+
+      const saida = new Saida(
+        index + 1, // Sequência
+        horarioDeSaidaAnterior,
+        formatTimeFromMilliseconds(horarioDeSaidaAnterior),
+        dadosAnterior.horaRetorno || '--', // Adicionado fallback
+        dadosAnterior.id,
+        dadosAnterior.tempoDeFala || 0,
+        dadosAnterior.entradaNaSala || 0
+      );
+      arrayDeSaidas.push(saida);
+    });
+
+    // ETAPAS 4 e 5 MODIFICADAS:
+    // Não criamos um novo participante. Modificamos o que foi passado como argumento.
+
+    // 4. Atribuir todas as propriedades encontradas no cookie ao participante existente.
+    // O Object.assign copia todas as propriedades de `dadosParticipantePrincipal`
+    // para o objeto `participante` que veio como parâmetro.
+    Object.assign(participante, dadosParticipantePrincipal);
+
+    // 5. Atribuir o histórico de saídas ao participante existente.
+    participante.saidas = arrayDeSaidas;
+
+    console.log(`Participante "${participante.displayName}" ATUALIZADO com os dados do cookie:`, participante);
+    if (arrayDeSaidas.length > 0) {
+      console.log('Dados de IDs anteriores consolidados em "saidas":', arrayDeSaidas);
+    }
+    
+    // A função termina aqui, não há retorno de valor.
+
+  } catch (error) {
+    console.error('Erro ao processar lista de participantes do cookie:', error);
+    Cookies.remove(LISTA_PARTICIPANTES_COOKIE_KEY);
+  }
+}
 
   public getParticipantNames(): IChaveDataBase[] {
     try {
@@ -576,6 +567,7 @@ class DataBaseForGauge {
     try {
       console.log(` ==== 1. processarParticipante --> Processando chave: ${key} no foreach em processarParticipante ===`);
       const now = new Date().getTime()
+
       /**
        * Salva um novo participante na lista no cookie ou atualiza um existente.
        * A identificação é feita pelo campo 'id' do participante.
@@ -665,6 +657,11 @@ class DataBaseForGauge {
           fatorTempoPresenca: 0,
           fatorAcumuladoCurvaLorenz: 0
         };
+
+        /**
+         * Verifica se o participante novo está no cookie guardado
+         */
+        DataBaseForGauge.atualizarParticipanteComDadosDoCookie(novoParticipante);
 
         console.log(`==== 4. processarParticipante  --> novo participante ${novoParticipante.id}: `, novoParticipante);
 
