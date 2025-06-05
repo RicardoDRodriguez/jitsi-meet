@@ -40,83 +40,85 @@ class DataBaseForGauge {
 
 
 
- static atualizarParticipanteComDadosDoCookie(participante: Participante): void {
-  const listaJSON = Cookies.get(LISTA_PARTICIPANTES_COOKIE_KEY);
+  static atualizarParticipanteComDadosDoCookie(participante: Participante): void {
+    const listaJSON = Cookies.get(LISTA_PARTICIPANTES_COOKIE_KEY);
 
-  if (!listaJSON) {
-    console.log(`Nenhuma lista de participantes encontrada no cookie com a chave: ${LISTA_PARTICIPANTES_COOKIE_KEY}`);
-    return; // A função agora simplesmente termina se não encontrar o cookie.
-  }
-
-  try {
-    const listaDadosParticipantes: any[] = JSON.parse(listaJSON);
-    if (!Array.isArray(listaDadosParticipantes)) {
-      console.error('Formato inválido no cookie, não é um array.');
-      Cookies.remove(LISTA_PARTICIPANTES_COOKIE_KEY);
-      return;
+    if (!listaJSON) {
+      console.log(`Nenhuma lista de participantes encontrada no cookie com a chave: ${LISTA_PARTICIPANTES_COOKIE_KEY}`);
+      return; // A função agora simplesmente termina se não encontrar o cookie.
     }
 
-    // 1. Filtrar usando as propriedades do objeto participante recebido
-    const correspondentesCompletos = listaDadosParticipantes.filter(
-      p => p.displayName === participante.displayName && p.sala === participante.sala
-    );
-
-    if (correspondentesCompletos.length === 0) {
-      console.log(`Nenhum participante "${participante.displayName}" na sala "${participante.sala}" encontrado no cookie.`);
-      return; // Termina se não houver correspondência.
-    }
-
-    // 2. Ordenar por entradaNaSala (mais recente primeiro) para identificar o principal
-    correspondentesCompletos.sort((a, b) => (b.entradaNaSala || 0) - (a.entradaNaSala || 0));
-
-    const dadosParticipantePrincipal = correspondentesCompletos[0];
-    const dadosParticipantesAnteriores = correspondentesCompletos.slice(1);
-
-    // 3. Construir objetos Saida para os registros anteriores (esta lógica permanece a mesma)
-    const arrayDeSaidas: Saida[] = [];
-    dadosParticipantesAnteriores.forEach((dadosAnterior, index) => {
-      let horarioDeSaidaAnterior = 0;
-      if (dadosAnterior.entradaNaSala && dadosAnterior.tempoPresenca) {
-        horarioDeSaidaAnterior = dadosAnterior.entradaNaSala + dadosAnterior.tempoPresenca;
-      } else if (dadosAnterior.timeoutMeet) {
-        horarioDeSaidaAnterior = dadosAnterior.timeoutMeet;
+    try {
+      const listaDadosParticipantes: any[] = JSON.parse(listaJSON);
+      if (!Array.isArray(listaDadosParticipantes)) {
+        console.error('Formato inválido no cookie, não é um array.');
+        Cookies.remove(LISTA_PARTICIPANTES_COOKIE_KEY);
+        return;
       }
 
-      const saida = new Saida(
-        index + 1, // Sequência
-        horarioDeSaidaAnterior,
-        formatTimeFromMilliseconds(horarioDeSaidaAnterior),
-        dadosAnterior.horaRetorno || '--', // Adicionado fallback
-        dadosAnterior.id,
-        dadosAnterior.tempoDeFala || 0,
-        dadosAnterior.entradaNaSala || 0
+      // 1. Filtrar usando as propriedades do objeto participante recebido
+      const correspondentesCompletos = listaDadosParticipantes.filter(
+        p => p.displayName === participante.displayName &&
+          p.sala === participante.sala &&
+          participante.local
       );
-      arrayDeSaidas.push(saida);
-    });
 
-    // ETAPAS 4 e 5 MODIFICADAS:
-    // Não criamos um novo participante. Modificamos o que foi passado como argumento.
+      if (correspondentesCompletos.length === 0) {
+        console.log(`Nenhum participante "${participante.displayName}" na sala "${participante.sala}" encontrado no cookie.`);
+        return; // Termina se não houver correspondência.
+      }
 
-    // 4. Atribuir todas as propriedades encontradas no cookie ao participante existente.
-    // O Object.assign copia todas as propriedades de `dadosParticipantePrincipal`
-    // para o objeto `participante` que veio como parâmetro.
-    Object.assign(participante, dadosParticipantePrincipal);
+      // 2. Ordenar por entradaNaSala (mais recente primeiro) para identificar o principal
+      correspondentesCompletos.sort((a, b) => (b.entradaNaSala || 0) - (a.entradaNaSala || 0));
 
-    // 5. Atribuir o histórico de saídas ao participante existente.
-    participante.saidas = arrayDeSaidas;
+      const dadosParticipantePrincipal = correspondentesCompletos[0];
+      const dadosParticipantesAnteriores = correspondentesCompletos.slice(1);
 
-    console.log(`Participante "${participante.displayName}" ATUALIZADO com os dados do cookie:`, participante);
-    if (arrayDeSaidas.length > 0) {
-      console.log('Dados de IDs anteriores consolidados em "saidas":', arrayDeSaidas);
+      // 3. Construir objetos Saida para os registros anteriores (esta lógica permanece a mesma)
+      const arrayDeSaidas: Saida[] = [];
+      dadosParticipantesAnteriores.forEach((dadosAnterior, index) => {
+        let horarioDeSaidaAnterior = 0;
+        if (dadosAnterior.entradaNaSala && dadosAnterior.tempoPresenca) {
+          horarioDeSaidaAnterior = dadosAnterior.entradaNaSala + dadosAnterior.tempoPresenca;
+        } else if (dadosAnterior.timeoutMeet) {
+          horarioDeSaidaAnterior = dadosAnterior.timeoutMeet;
+        }
+
+        const saida = new Saida(
+          index + 1, // Sequência
+          horarioDeSaidaAnterior,
+          formatTimeFromMilliseconds(horarioDeSaidaAnterior),
+          dadosAnterior.horaRetorno || '--', // Adicionado fallback
+          dadosAnterior.id,
+          dadosAnterior.tempoDeFala || 0,
+          dadosAnterior.entradaNaSala || 0
+        );
+        arrayDeSaidas.push(saida);
+      });
+
+      // ETAPAS 4 e 5 MODIFICADAS:
+      // Não criamos um novo participante. Modificamos o que foi passado como argumento.
+
+      // 4. Atribuir todas as propriedades encontradas no cookie ao participante existente.
+      // O Object.assign copia todas as propriedades de `dadosParticipantePrincipal`
+      // para o objeto `participante` que veio como parâmetro.
+      Object.assign(participante, dadosParticipantePrincipal);
+
+      // 5. Atribuir o histórico de saídas ao participante existente.
+      participante.saidas = arrayDeSaidas;
+
+      console.log(`Participante "${participante.displayName}" ATUALIZADO com os dados do cookie:`, participante);
+      if (arrayDeSaidas.length > 0) {
+        console.log('Dados de IDs anteriores consolidados em "saidas":', arrayDeSaidas);
+      }
+
+      // A função termina aqui, não há retorno de valor.
+
+    } catch (error) {
+      console.error('Erro ao processar lista de participantes do cookie:', error);
+      Cookies.remove(LISTA_PARTICIPANTES_COOKIE_KEY);
     }
-    
-    // A função termina aqui, não há retorno de valor.
-
-  } catch (error) {
-    console.error('Erro ao processar lista de participantes do cookie:', error);
-    Cookies.remove(LISTA_PARTICIPANTES_COOKIE_KEY);
   }
-}
 
   public getParticipantNames(): IChaveDataBase[] {
     try {
