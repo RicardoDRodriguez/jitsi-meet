@@ -102,6 +102,7 @@ class DataBaseForGauge {
       // 4. Atribuir todas as propriedades encontradas no cookie ao participante existente.
       // O Object.assign copia todas as propriedades de `dadosParticipantePrincipal`
       // para o objeto `participante` que veio como parâmetro.
+      dadosParticipantePrincipal.isReturned= true;
       Object.assign(participante, dadosParticipantePrincipal);
 
       // 5. Atribuir o histórico de saídas ao participante existente.
