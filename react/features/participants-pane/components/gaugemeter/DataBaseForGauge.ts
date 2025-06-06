@@ -55,7 +55,7 @@ class DataBaseForGauge {
         Cookies.remove(LISTA_PARTICIPANTES_COOKIE_KEY);
         return;
       }
-      console.log(`====  atualizarParticipanteComDadosDoCookie === 3. Nenhum participante "${participante.nome}" na sala "${participante.sala}" encontrado no cookie.`);
+      console.log(`====  atualizarParticipanteComDadosDoCookie === 3. Nenhum participante "${participante.name}" na sala "${participante.sala}" encontrado no cookie.`);
 
       // 1. Filtrar usando as propriedades do objeto participante recebido
       const correspondentesCompletos = listaDadosParticipantes.filter(
