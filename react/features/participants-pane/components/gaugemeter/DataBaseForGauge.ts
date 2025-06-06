@@ -59,7 +59,7 @@ class DataBaseForGauge {
 
       // 1. Filtrar usando as propriedades do objeto participante recebido
       const correspondentesCompletos = listaDadosParticipantes.filter(
-        p => p.displayName === participante.displayName &&
+        p =>( p.displayName === participante.displayName || p.name === participante.name ) &&
           p.sala === participante.sala &&
           participante.local
       );
