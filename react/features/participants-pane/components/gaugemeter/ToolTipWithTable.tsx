@@ -16,7 +16,7 @@ interface CustomTooltipWithTableProps {
   children: ReactElement; // Alterado de ReactNode para ReactElement
 }
 const CustomTooltipWithTable = ({ participante, children }: CustomTooltipWithTableProps) => {
-  if (!participante.saidas || participante.saidas.length === 0) {
+  if (! participante.saidas || participante.saidas.length === 0) {
     return <>{children}</>;
   }
 
