@@ -666,7 +666,7 @@ class DataBaseForGauge {
         /**
          * Verifica se o participante novo está no cookie guardado
          */
-        DataBaseForGauge.atualizarParticipanteComDadosDoCookie(novoParticipante);
+        // DataBaseForGauge.atualizarParticipanteComDadosDoCookie(novoParticipante);
 
         console.log(`==== 4. processarParticipante  --> novo participante ${novoParticipante.id}: `, novoParticipante);
 
