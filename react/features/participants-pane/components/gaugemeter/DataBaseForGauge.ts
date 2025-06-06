@@ -55,7 +55,6 @@ class DataBaseForGauge {
         Cookies.remove(LISTA_PARTICIPANTES_COOKIE_KEY);
         return;
       }
-      console.log(`====  atualizarParticipanteComDadosDoCookie === 3. Nenhum participante "${participante.name}" na sala "${participante.sala}" encontrado no cookie.`);
 
       // 1. Filtrar usando as propriedades do objeto participante recebido
       const correspondentesCompletos = listaDadosParticipantes.filter(
@@ -68,6 +67,11 @@ class DataBaseForGauge {
         return; // Termina se não houver correspondência.
       }
 
+      if (correspondentesCompletos.length === 0) {
+        console.log(`====  atualizarParticipanteComDadosDoCookie === 3.1 Lista dos correspondentes completos "${correspondentesCompletos}" na sala "${participante.sala}" encontrado no cookie.`);
+        return; // Termina se não houver correspondência.
+      }
+
       // 2. Ordenar por entradaNaSala (mais recente primeiro) para identificar o principal
       correspondentesCompletos.sort((a, b) => (b.entradaNaSala || 0) - (a.entradaNaSala || 0));
 
@@ -76,6 +80,7 @@ class DataBaseForGauge {
 
       // 3. Construir objetos Saida para os registros anteriores (esta lógica permanece a mesma)
       const arrayDeSaidas: Saida[] = [];
+      let ultimoTempoDeFala = 0
       dadosParticipantesAnteriores.forEach((dadosAnterior, index) => {
         let horarioDeSaidaAnterior = 0;
         if (dadosAnterior.entradaNaSala && dadosAnterior.tempoPresenca) {
@@ -83,7 +88,7 @@ class DataBaseForGauge {
         } else if (dadosAnterior.timeoutMeet) {
           horarioDeSaidaAnterior = dadosAnterior.timeoutMeet;
         }
-
+        ultimoTempoDeFala = dadosAnterior.tempoDeFala;
         const saida = new Saida(
           index + 1, // Sequência
           horarioDeSaidaAnterior,
@@ -102,7 +107,8 @@ class DataBaseForGauge {
       // 4. Atribuir todas as propriedades encontradas no cookie ao participante existente.
       // O Object.assign copia todas as propriedades de `dadosParticipantePrincipal`
       // para o objeto `participante` que veio como parâmetro.
-      dadosParticipantePrincipal.isReturned= true;
+      dadosParticipantePrincipal.isReturned = true;
+      dadosParticipantePrincipal.tempoDeFala = ultimoTempoDeFala;
       Object.assign(participante, dadosParticipantePrincipal);
 
       // 5. Atribuir o histórico de saídas ao participante existente.
