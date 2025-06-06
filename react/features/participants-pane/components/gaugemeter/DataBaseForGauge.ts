@@ -55,7 +55,7 @@ class DataBaseForGauge {
         Cookies.remove(LISTA_PARTICIPANTES_COOKIE_KEY);
         return;
       }
-      console.log(`====  atualizarParticipanteComDadosDoCookie === 3. Nenhum participante "${participante.displayName}" na sala "${participante.sala}" encontrado no cookie.`);
+      console.log(`====  atualizarParticipanteComDadosDoCookie === 3. Nenhum participante "${participante.nome}" na sala "${participante.sala}" encontrado no cookie.`);
 
       // 1. Filtrar usando as propriedades do objeto participante recebido
       const correspondentesCompletos = listaDadosParticipantes.filter(
@@ -64,7 +64,7 @@ class DataBaseForGauge {
       );
 
       if (correspondentesCompletos.length === 0) {
-        console.log(`====  atualizarParticipanteComDadosDoCookie === 3. Nenhum participante "${participante.displayName}" na sala "${participante.sala}" encontrado no cookie.`);
+        console.log(`====  atualizarParticipanteComDadosDoCookie === 3. Nenhum participante "${participante.name}" na sala "${participante.sala}" encontrado no cookie.`);
         return; // Termina se não houver correspondência.
       }
 
@@ -108,7 +108,7 @@ class DataBaseForGauge {
       // 5. Atribuir o histórico de saídas ao participante existente.
       participante.saidas = arrayDeSaidas;
 
-      console.log(`====  atualizarParticipanteComDadosDoCookie === 4. Participante "${participante.displayName}" ATUALIZADO com os dados do cookie:`, participante);
+      console.log(`====  atualizarParticipanteComDadosDoCookie === 4. Participante "${participante.name}" ATUALIZADO com os dados do cookie:`, participante);
       if (arrayDeSaidas.length > 0) {
         console.log('====  atualizarParticipanteComDadosDoCookie === 5. Dados de IDs anteriores consolidados em "saidas":', arrayDeSaidas);
       }
