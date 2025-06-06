@@ -44,14 +44,14 @@ class DataBaseForGauge {
     const listaJSON = Cookies.get(LISTA_PARTICIPANTES_COOKIE_KEY);
 
     if (!listaJSON) {
-      console.log(`Nenhuma lista de participantes encontrada no cookie com a chave: ${LISTA_PARTICIPANTES_COOKIE_KEY}`);
+      console.log(`====  atualizarParticipanteComDadosDoCookie === 1. Nenhuma lista de participantes encontrada no cookie com a chave: ${LISTA_PARTICIPANTES_COOKIE_KEY}`);
       return; // A função agora simplesmente termina se não encontrar o cookie.
     }
 
     try {
       const listaDadosParticipantes: any[] = JSON.parse(listaJSON);
       if (!Array.isArray(listaDadosParticipantes)) {
-        console.error('Formato inválido no cookie, não é um array.');
+        console.error('====  atualizarParticipanteComDadosDoCookie === 2. Formato inválido no cookie, não é um array.');
         Cookies.remove(LISTA_PARTICIPANTES_COOKIE_KEY);
         return;
       }
@@ -64,7 +64,7 @@ class DataBaseForGauge {
       );
 
       if (correspondentesCompletos.length === 0) {
-        console.log(`Nenhum participante "${participante.displayName}" na sala "${participante.sala}" encontrado no cookie.`);
+        console.log(`====  atualizarParticipanteComDadosDoCookie === 3. Nenhum participante "${participante.displayName}" na sala "${participante.sala}" encontrado no cookie.`);
         return; // Termina se não houver correspondência.
       }
 
@@ -108,15 +108,15 @@ class DataBaseForGauge {
       // 5. Atribuir o histórico de saídas ao participante existente.
       participante.saidas = arrayDeSaidas;
 
-      console.log(`Participante "${participante.displayName}" ATUALIZADO com os dados do cookie:`, participante);
+      console.log(`====  atualizarParticipanteComDadosDoCookie === 4. Participante "${participante.displayName}" ATUALIZADO com os dados do cookie:`, participante);
       if (arrayDeSaidas.length > 0) {
-        console.log('Dados de IDs anteriores consolidados em "saidas":', arrayDeSaidas);
+        console.log('====  atualizarParticipanteComDadosDoCookie === 5. Dados de IDs anteriores consolidados em "saidas":', arrayDeSaidas);
       }
 
       // A função termina aqui, não há retorno de valor.
 
     } catch (error) {
-      console.error('Erro ao processar lista de participantes do cookie:', error);
+      console.error('====  atualizarParticipanteComDadosDoCookie === 6. Erro ao processar lista de participantes do cookie:', error);
       Cookies.remove(LISTA_PARTICIPANTES_COOKIE_KEY);
     }
   }
