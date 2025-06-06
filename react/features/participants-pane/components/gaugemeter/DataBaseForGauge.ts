@@ -55,17 +55,16 @@ class DataBaseForGauge {
         Cookies.remove(LISTA_PARTICIPANTES_COOKIE_KEY);
         return;
       }
-      console.log(`====  atualizarParticipanteComDadosDoCookie === 3. Nenhum participante "${participante.name}" na sala "${participante.sala}" encontrado no cookie.`);
+      console.log(`====  atualizarParticipanteComDadosDoCookie === 3. Nenhum participante "${participante.displayName}" na sala "${participante.sala}" encontrado no cookie.`);
 
       // 1. Filtrar usando as propriedades do objeto participante recebido
       const correspondentesCompletos = listaDadosParticipantes.filter(
         p => p.name === participante.name &&
-          p.sala === participante.sala &&
-          participante.local
+          p.sala === participante.sala 
       );
 
       if (correspondentesCompletos.length === 0) {
-        console.log(`====  atualizarParticipanteComDadosDoCookie === 3. Nenhum participante "${participante.name}" na sala "${participante.sala}" encontrado no cookie.`);
+        console.log(`====  atualizarParticipanteComDadosDoCookie === 3. Nenhum participante "${participante.displayName}" na sala "${participante.sala}" encontrado no cookie.`);
         return; // Termina se não houver correspondência.
       }
 
@@ -109,7 +108,7 @@ class DataBaseForGauge {
       // 5. Atribuir o histórico de saídas ao participante existente.
       participante.saidas = arrayDeSaidas;
 
-      console.log(`====  atualizarParticipanteComDadosDoCookie === 4. Participante "${participante.name}" ATUALIZADO com os dados do cookie:`, participante);
+      console.log(`====  atualizarParticipanteComDadosDoCookie === 4. Participante "${participante.displayName}" ATUALIZADO com os dados do cookie:`, participante);
       if (arrayDeSaidas.length > 0) {
         console.log('====  atualizarParticipanteComDadosDoCookie === 5. Dados de IDs anteriores consolidados em "saidas":', arrayDeSaidas);
       }
@@ -136,7 +135,7 @@ class DataBaseForGauge {
         if (user) {
           nomesChave.push({
             key: id,
-            nomeChave: user.name()
+            nomeChave: user.getDisplayName()
           });
         }
 
@@ -666,7 +665,6 @@ class DataBaseForGauge {
         /**
          * Verifica se o participante novo está no cookie guardado
          */
-        
         DataBaseForGauge.atualizarParticipanteComDadosDoCookie(novoParticipante);
 
         console.log(`==== 4. processarParticipante  --> novo participante ${novoParticipante.id}: `, novoParticipante);
