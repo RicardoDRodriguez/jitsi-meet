@@ -38,12 +38,7 @@ class DataBaseForGauge {
     // Inicialização da classe (se necessário)
     console.log("==== 0. ClearData = construtor do DataBaseForGauge chamado.");
   }
-
-
-
-  // CHANGED: Função renomeada de '...DoCookie' para '...DoStorage'.
   static atualizarParticipanteComDadosDoStorage(participante: Participante): void {
-    // CHANGED: Lê os dados do localStorage em vez dos cookies.
     const listaJSON = localStorage.getItem(LISTA_PARTICIPANTES_STORAGE_KEY);
 
     if (!listaJSON) {
@@ -55,12 +50,10 @@ class DataBaseForGauge {
       const listaDadosParticipantes: any[] = JSON.parse(listaJSON);
       if (!Array.isArray(listaDadosParticipantes)) {
         console.error('==== atualizarParticipanteComDadosDoStorage === 2. Formato inválido no storage, não é um array.');
-        // CHANGED: Remove o item do localStorage.
         localStorage.removeItem(LISTA_PARTICIPANTES_STORAGE_KEY);
         return;
       }
 
-      // 1. Filtrar usando as propriedades do objeto participante recebido
       const correspondentesCompletos = listaDadosParticipantes.filter(
         p => p.name === participante.name &&
           p.sala === participante.sala
@@ -71,13 +64,11 @@ class DataBaseForGauge {
         return;
       }
 
-      // 2. Ordenar por entradaNaSala (mais recente primeiro) para identificar o principal
       correspondentesCompletos.sort((a, b) => (b.entradaNaSala || 0) - (a.entradaNaSala || 0));
 
       const dadosParticipantePrincipal = correspondentesCompletos[0];
       const dadosParticipantesAnteriores = correspondentesCompletos.slice(1);
 
-      // 3. Construir objetos Saida para os registros anteriores
       const arrayDeSaidas: Saida[] = [];
       let ultimoTempoDeFala = 0;
       dadosParticipantesAnteriores.forEach((dadosAnterior, index) => {
@@ -100,12 +91,10 @@ class DataBaseForGauge {
         arrayDeSaidas.push(saida);
       });
 
-      // 4. Atribuir todas as propriedades encontradas ao participante existente.
       dadosParticipantePrincipal.isReturned = true;
       dadosParticipantePrincipal.tempoDeFala = ultimoTempoDeFala;
       Object.assign(participante, dadosParticipantePrincipal);
 
-      // 5. Atribuir o histórico de saídas ao participante existente.
       participante.saidas = arrayDeSaidas;
 
       console.log(`==== atualizarParticipanteComDadosDoStorage === 4. Participante "${participante.name}" ATUALIZADO com os dados do storage:`, participante);
@@ -115,7 +104,6 @@ class DataBaseForGauge {
 
     } catch (error) {
       console.error('==== atualizarParticipanteComDadosDoStorage === 6. Erro ao processar lista de participantes do storage:', error);
-      // CHANGED: Remove o item do localStorage.
       localStorage.removeItem(LISTA_PARTICIPANTES_STORAGE_KEY);
     }
   }
@@ -123,24 +111,18 @@ class DataBaseForGauge {
   public getParticipantNames(): IChaveDataBase[] {
     try {
       const sortedParticipantIds: any[] = getSortedParticipantIds(DataBaseForGauge.state);
-      console.log("==== 1. ClearData = SortedParticipantsId", sortedParticipantIds);
       const nomesChave: IChaveDataBase[] = [];
-      let chave: IChaveDataBase;
 
-      // Processa participantes remotos
       sortedParticipantIds.forEach((id: string) => {
         const user = APP.conference.getParticipantById(id);
-        console.log("==== 1. ClearData = Varrendo Ids", id, user);
         if (user) {
           nomesChave.push({
             key: id,
             nomeChave: user.getDisplayName()
           });
         }
-
       });
 
-      // Processa participante local
       const localUser = getLocalParticipant(DataBaseForGauge.state);
       if (localUser) {
         nomesChave.push({
@@ -148,7 +130,6 @@ class DataBaseForGauge {
           nomeChave: localUser.name
         });
       }
-      console.log("==== 3. ClearData = nomesChave", nomesChave);
       return nomesChave;
     } catch (error: any) {
       console.log('==== 2. ClearData = erro encontrado', error.message);
@@ -156,48 +137,29 @@ class DataBaseForGauge {
     }
   }
 
-
-
-  /**
-   * Atualiza os participantes ativando ou desativando conforme suas ações !
-   */
-
-
-
   async clearData(): Promise<void> {
     try {
       const atualizarStatusParticipantes = () => {
-
         const sortedParticipantsKey: IChaveDataBase[] = this.getParticipantNames();
         DataBaseForGauge.participantes.forEach(participante => {
-
-          // Verifica se o individo está ativo
           const isActive = sortedParticipantsKey.some(
             (participantKey) => participantKey.nomeChave === participante.name
           );
 
-          // Participante ESTÁ na lista de ativos (retornou ou nunca saiu)
           if (isActive) {
             if (participante.isOut) {
-              // Caso 1: Participante RETORNOU (estava isOut=true e agora está ativo)
               participante.isOut = false;
               participante.isReturned = true;
               participante.numberOfReturns = (participante.numberOfReturns || 0) + 1;
-
-              // Registra o horário de retorno na última saída (se houver saídas)
               if (participante.saidas?.length) {
                 participante.saidas[participante.saidas.length - 1].horarioDeRetorno = Date.now();
                 participante.saidas[participante.saidas.length - 1].horaRetorno = getHorarioAtual();
               }
             } else {
-              // Caso 2: Participante NUNCA SAIU (mantém isOut=false)
               participante.isReturned = false;
             }
-          }
-          // Participante NÃO está na lista de ativos (saiu ou já estava fora)
-          else {
+          } else {
             if (!participante.isOut) {
-              // Caso 3: NOVA SAÍDA (não estava isOut=true)
               const saida = new Saida(
                 participante.saidas ? participante.saidas.length + 1 : 1,
                 Date.now(), getHorarioAtual(), '--',
@@ -209,26 +171,18 @@ class DataBaseForGauge {
               participante.isReturned = false;
               participante.saidas = participante.saidas || [];
               participante.saidas.push(saida);
-              console.log('==== 99. ClearData = Saida incluida:', participante.saidas);
             }
-            // Caso 4: JÁ ESTAVA FORA (não faz nada)
           }
         });
-
-        console.log('==== 0. ClearData = Status atualizado:', DataBaseForGauge.participantes);
       };
 
       if (DataBaseForGauge.participantes.length > 0) {
         atualizarStatusParticipantes();
-      } else {
-        console.log('==== 1. ClearData = Nenhum participante encontrado.');
       }
     } catch (error: any) {
       console.log('==== 2. ClearData = erro encontrado', error.message);
     }
   }
-
-
   async percorrerParticipantes(): Promise<void> {
     console.log("Percorrendo todos os participantes:");
     DataBaseForGauge.participantes.forEach((participante) => {
@@ -567,20 +521,9 @@ class DataBaseForGauge {
 
   async processarParticipante(key: string, room: string): Promise<void> {
     try {
-      console.log(` ==== 1. processarParticipante --> Processando chave: ${key} no foreach em processarParticipante ===`);
-      const now = new Date().getTime()
-
-      /**
-       * Salva um novo participante na lista no storage ou atualiza um existente.
-       * A identificação é feita pelo campo 'id' do participante.
-       * @param participanteParaSalvar O objeto Participante a ser salvo ou atualizado.
-       */
-      //
-      //Função interna para usar localStorage - Salvar ou AtualizarParticipante na Storage.
       const salvarOuAtualizarParticipanteNoStorage = (
         participanteParaSalvar: Participante
       ): void => {
-        // 1. Recuperar a lista atual do localStorage
         const listaJSON = localStorage.getItem(LISTA_PARTICIPANTES_STORAGE_KEY);
         let listaParticipantes: Participante[] = [];
 
@@ -588,58 +531,44 @@ class DataBaseForGauge {
           try {
             listaParticipantes = JSON.parse(listaJSON);
             if (!Array.isArray(listaParticipantes)) {
-              console.warn('==== salvarOuAtualizarParticipanteNoStorage === 1. Conteúdo do storage não era um array. Iniciando com lista vazia.');
               listaParticipantes = [];
             }
           } catch (error) {
-            console.error('==== salvarOuAtualizarParticipanteNoStorage === 2. Erro ao parsear lista de participantes do storage:', error);
+            console.error('Erro ao parsear lista de participantes do storage:', error);
             listaParticipantes = [];
-            // CHANGED: Remove o item do localStorage.
             localStorage.removeItem(LISTA_PARTICIPANTES_STORAGE_KEY);
           }
         }
 
-        // 2. Verificar se o participante já existe na lista (pelo id)
         const indiceExistente = listaParticipantes.findIndex(p => p.id === participanteParaSalvar.id);
 
-        // 3. Se existir, atualizar. Se não, adicionar.
         if (indiceExistente !== -1) {
           listaParticipantes[indiceExistente] = participanteParaSalvar;
-          console.log(`==== salvarOuAtualizarParticipanteNoStorage === 3. Participante com ID "${participanteParaSalvar.id}" atualizado na lista.`);
         } else {
           listaParticipantes.push(participanteParaSalvar);
-          console.log(`==== salvarOuAtualizarParticipanteNoStorage === 4.articipante com ID "${participanteParaSalvar.id}" adicionado à lista.`);
         }
 
-        // 4. Salvar a lista modificada de volta no localStorage
         try {
-          // CHANGED: Salva no localStorage. A opção 'expires' não existe aqui.
           localStorage.setItem(LISTA_PARTICIPANTES_STORAGE_KEY, JSON.stringify(listaParticipantes));
-          console.log('==== salvarOuAtualizarParticipanteNoStorage === 5. Lista de participantes salva no localStorage.');
+          console.log(`==== Salvo com sucesso no Storage o participante: ${participanteParaSalvar.name}`);
         } catch (error) {
-          console.error('==== salvarOuAtualizarParticipanteNoStorage === 6. Erro ao salvar lista de participantes no localStorage (pode ter excedido o limite):', error);
+          console.error('Erro ao salvar lista no localStorage (limite excedido?):', error);
         }
-      };;
+      };
 
       const atualizarParticipante = (idkey: any, participante: Participante, stats: ISpeaker, now: number) => {
         participante.id = idkey;
         participante.tempoDeFala = stats.getTotalDominantSpeakerTime() ?? participante.tempoDeFala;
         participante.tempoPresenca = now - participante.entradaNaSala;
-        participante.fatorTempoPresenca = 0;
-        participante.fatorAcumuladoCurvaLorenz = 0;
 
-        // Salva os dados do participante no Storage Criado
         salvarOuAtualizarParticipanteNoStorage(participante);
-        console.log(`==== 6. processarParticipante  --> participante atualizado ${participante.id}: `, participante);
       };
 
-
+      // ############# FUNÇÃO CORRIGIDA #############
       const adicionarParticipante = (participante: Participante, stats: ISpeaker, partic: IParticipant) => {
         const user = APP.conference.getParticipantById(partic.id);
-        console.log(`==== 1. processarParticipante  --> partic : `, partic);
-        console.log(`==== 2. processarParticipante  --> stats : `, stats);
-        console.log(`==== 3. processarParticipante  -->. user: `, user);
 
+        // 1. Cria o objeto novoParticipante com os dados da sessão atual
         const novoParticipante = {
           ...participante,
           id: partic.id,
@@ -656,19 +585,17 @@ class DataBaseForGauge {
           fatorAcumuladoCurvaLorenz: 0
         };
 
-        /**
-         * Verifica se o participante novo está no storage guardado
-         */
-        salvarOuAtualizarParticipanteNoStorage(participante);
+        console.log(`==== adicionarParticipante === 1. Criado objeto base para: ${novoParticipante.name}`);
 
-        console.log(`==== 4. processarParticipante  --> novo participante ${novoParticipante.id}: `, novoParticipante);
+        // 2. CORREÇÃO: Chama a função para LER dados históricos do storage e fundir com o novo participante
+        DataBaseForGauge.atualizarParticipanteComDadosDoStorage(novoParticipante);
 
-        /**
-         * Salva o participante em um storage no computador local
-         */
+        console.log(`==== adicionarParticipante === 2. Após checar storage, estado final de ${novoParticipante.name}:`, novoParticipante);
+
+        // 3. CORREÇÃO: Salva o estado final (combinado) de volta no storage
         salvarOuAtualizarParticipanteNoStorage(novoParticipante);
-        /*----------------------------------------*/
 
+        // 4. Adiciona à lista em memória da sessão atual
         DataBaseForGauge.participantes.push(novoParticipante);
       };
 
@@ -676,30 +603,22 @@ class DataBaseForGauge {
       const sortedParticipantsKey: IChaveDataBase[] = this.getParticipantNames();
       for (const nomeChave of sortedParticipantsKey) {
         const partic: IParticipant | undefined = getParticipantById(DataBaseForGauge.state, nomeChave.key);
-        console.log(`==== 4. processarParticipante --> IPArticipant encontrado: `, partic);
         if (partic) {
           const speakerStats = DataBaseForGauge.conference.getSpeakerStats();
           const now = new Date().getTime();
+          const existingParticipant = DataBaseForGauge.participantes.find(p => nomeChave.nomeChave === p.name);
+          const stats = speakerStats[nomeChave.key];
 
-          // Verifica se o indivíduo existe
-          console.log(`==== 4. processarParticipante --> sortedParticipantsKey: `, sortedParticipantsKey);
-          const existingParticipant = DataBaseForGauge.participantes.find(
-            (participante) => nomeChave.nomeChave === participante.name
-          );
-
-          const stats = speakerStats[nomeChave.key]; // Changed 'key' to 'nomeChave.key'
           if (existingParticipant) {
-            // Atualizar dados de participante
             atualizarParticipante(nomeChave.key, existingParticipant, stats, now);
           } else {
-            const participante: Participante = new Participante(nomeChave.key, room);
-            // Adicionar participante
+            const participante = new Participante(nomeChave.key, room);
             adicionarParticipante(participante, stats, partic);
           }
         }
       }
     } catch (error: any) {
-      console.error("==== 4. processarParticipante - Error :", error);
+      console.error("==== processarParticipante - Erro geral :", error);
     }
   }
 
