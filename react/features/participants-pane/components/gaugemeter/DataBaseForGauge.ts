@@ -19,7 +19,7 @@ interface IChaveDataBase {
 }
 
 // Chave para refletir o uso do localStorage.
-const LISTA_PARTICIPANTES_STORAGE_KEY = 'listaParticipantesStorage';
+const LISTA_PARTICIPANTES_STORAGE_KEY = 'DataBaseForGauge';
 
 
 class DataBaseForGauge {
