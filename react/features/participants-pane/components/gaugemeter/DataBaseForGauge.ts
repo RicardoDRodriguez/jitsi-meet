@@ -568,7 +568,6 @@ class DataBaseForGauge {
         salvarOuAtualizarParticipanteNoStorage(participante);
       };
 
-      // ############# FUNÇÃO CORRIGIDA #############
       const adicionarParticipante = (participante: Participante, stats: ISpeaker, partic: IParticipant) => {
         const user = APP.conference.getParticipantById(partic.id);
 
@@ -592,7 +591,7 @@ class DataBaseForGauge {
         console.log(`==== adicionarParticipante === 1. Criado objeto base para: ${novoParticipante.name}`);
 
         // 2. CORREÇÃO: Chama a função para LER dados históricos do storage e fundir com o novo participante
-        DataBaseForGauge.atualizarParticipanteComDadosDoStorage(novoParticipante);
+        // DataBaseForGauge.atualizarParticipanteComDadosDoStorage(novoParticipante);
 
         console.log(`==== adicionarParticipante === 2. Após checar storage, estado final de ${novoParticipante.name}:`, novoParticipante);
 
