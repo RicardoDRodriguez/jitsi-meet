@@ -10,7 +10,7 @@ import Saida from "./Saida";
 import { forEach } from "lodash-es";
 import { formatTimeFromMilliseconds, getHorarioAtual } from "./TimeUtils";
 import { participantPresenceChanged } from "../../../base/participants/actions";
-import Cookies from 'js-cookie';
+
 
 
 interface IChaveDataBase {
@@ -18,7 +18,8 @@ interface IChaveDataBase {
   nomeChave: any; // Campo obrigatório (não opcional)
 }
 
-const LISTA_PARTICIPANTES_COOKIE_KEY = 'listaParticipantesCookie';
+// Chave para refletir o uso do localStorage.
+const LISTA_PARTICIPANTES_STORAGE_KEY = 'listaParticipantesStorage';
 
 
 class DataBaseForGauge {
@@ -40,92 +41,84 @@ class DataBaseForGauge {
 
 
 
-  static atualizarParticipanteComDadosDoCookie(participante: Participante): void {
-    const listaJSON = Cookies.get(LISTA_PARTICIPANTES_COOKIE_KEY);
+  // CHANGED: Função renomeada de '...DoCookie' para '...DoStorage'.
+    static atualizarParticipanteComDadosDoStorage(participante: Participante): void {
+        // CHANGED: Lê os dados do localStorage em vez dos cookies.
+        const listaJSON = localStorage.getItem(LISTA_PARTICIPANTES_STORAGE_KEY);
 
-    if (!listaJSON) {
-      console.log(`====  atualizarParticipanteComDadosDoCookie === 1. Nenhuma lista de participantes encontrada no cookie com a chave: ${LISTA_PARTICIPANTES_COOKIE_KEY}`);
-      return; // A função agora simplesmente termina se não encontrar o cookie.
-    }
-
-    try {
-      const listaDadosParticipantes: any[] = JSON.parse(listaJSON);
-      if (!Array.isArray(listaDadosParticipantes)) {
-        console.error('====  atualizarParticipanteComDadosDoCookie === 2. Formato inválido no cookie, não é um array.');
-        Cookies.remove(LISTA_PARTICIPANTES_COOKIE_KEY);
-        return;
-      }
-
-      // 1. Filtrar usando as propriedades do objeto participante recebido
-      const correspondentesCompletos = listaDadosParticipantes.filter(
-        p => p.name === participante.name &&
-          p.sala === participante.sala 
-      );
-
-      if (correspondentesCompletos.length === 0) {
-        console.log(`====  atualizarParticipanteComDadosDoCookie === 3. Nenhum participante "${participante.name}" na sala "${participante.sala}" encontrado no cookie.`);
-        return; // Termina se não houver correspondência.
-      }
-
-      if (correspondentesCompletos.length === 0) {
-        console.log(`====  atualizarParticipanteComDadosDoCookie === 3.1 Lista dos correspondentes completos "${correspondentesCompletos}" na sala "${participante.sala}" encontrado no cookie.`);
-        return; // Termina se não houver correspondência.
-      }
-
-      // 2. Ordenar por entradaNaSala (mais recente primeiro) para identificar o principal
-      correspondentesCompletos.sort((a, b) => (b.entradaNaSala || 0) - (a.entradaNaSala || 0));
-
-      const dadosParticipantePrincipal = correspondentesCompletos[0];
-      const dadosParticipantesAnteriores = correspondentesCompletos.slice(1);
-
-      // 3. Construir objetos Saida para os registros anteriores (esta lógica permanece a mesma)
-      const arrayDeSaidas: Saida[] = [];
-      let ultimoTempoDeFala = 0
-      dadosParticipantesAnteriores.forEach((dadosAnterior, index) => {
-        let horarioDeSaidaAnterior = 0;
-        if (dadosAnterior.entradaNaSala && dadosAnterior.tempoPresenca) {
-          horarioDeSaidaAnterior = dadosAnterior.entradaNaSala + dadosAnterior.tempoPresenca;
-        } else if (dadosAnterior.timeoutMeet) {
-          horarioDeSaidaAnterior = dadosAnterior.timeoutMeet;
+        if (!listaJSON) {
+            console.log(`==== atualizarParticipanteComDadosDoStorage === 1. Nenhuma lista de participantes encontrada no localStorage com a chave: ${LISTA_PARTICIPANTES_STORAGE_KEY}`);
+            return;
         }
-        ultimoTempoDeFala = dadosAnterior.tempoDeFala;
-        const saida = new Saida(
-          index + 1, // Sequência
-          horarioDeSaidaAnterior,
-          formatTimeFromMilliseconds(horarioDeSaidaAnterior),
-          dadosAnterior.horaRetorno || '--', // Adicionado fallback
-          dadosAnterior.id,
-          dadosAnterior.tempoDeFala || 0,
-          dadosAnterior.entradaNaSala || 0
-        );
-        arrayDeSaidas.push(saida);
-      });
 
-      // ETAPAS 4 e 5 MODIFICADAS:
-      // Não criamos um novo participante. Modificamos o que foi passado como argumento.
+        try {
+            const listaDadosParticipantes: any[] = JSON.parse(listaJSON);
+            if (!Array.isArray(listaDadosParticipantes)) {
+                console.error('==== atualizarParticipanteComDadosDoStorage === 2. Formato inválido no storage, não é um array.');
+                // CHANGED: Remove o item do localStorage.
+                localStorage.removeItem(LISTA_PARTICIPANTES_STORAGE_KEY);
+                return;
+            }
 
-      // 4. Atribuir todas as propriedades encontradas no cookie ao participante existente.
-      // O Object.assign copia todas as propriedades de `dadosParticipantePrincipal`
-      // para o objeto `participante` que veio como parâmetro.
-      dadosParticipantePrincipal.isReturned = true;
-      dadosParticipantePrincipal.tempoDeFala = ultimoTempoDeFala;
-      Object.assign(participante, dadosParticipantePrincipal);
+            // 1. Filtrar usando as propriedades do objeto participante recebido
+            const correspondentesCompletos = listaDadosParticipantes.filter(
+                p => p.name === participante.name &&
+                     p.sala === participante.sala
+            );
 
-      // 5. Atribuir o histórico de saídas ao participante existente.
-      participante.saidas = arrayDeSaidas;
+            if (correspondentesCompletos.length === 0) {
+                console.log(`==== atualizarParticipanteComDadosDoStorage === 3. Nenhum participante "${participante.name}" na sala "${participante.sala}" encontrado no storage.`);
+                return;
+            }
 
-      console.log(`====  atualizarParticipanteComDadosDoCookie === 4. Participante "${participante.name}" ATUALIZADO com os dados do cookie:`, participante);
-      if (arrayDeSaidas.length > 0) {
-        console.log('====  atualizarParticipanteComDadosDoCookie === 5. Dados de IDs anteriores consolidados em "saidas":', arrayDeSaidas);
-      }
+            // 2. Ordenar por entradaNaSala (mais recente primeiro) para identificar o principal
+            correspondentesCompletos.sort((a, b) => (b.entradaNaSala || 0) - (a.entradaNaSala || 0));
 
-      // A função termina aqui, não há retorno de valor.
+            const dadosParticipantePrincipal = correspondentesCompletos[0];
+            const dadosParticipantesAnteriores = correspondentesCompletos.slice(1);
 
-    } catch (error) {
-      console.error('====  atualizarParticipanteComDadosDoCookie === 6. Erro ao processar lista de participantes do cookie:', error);
-      Cookies.remove(LISTA_PARTICIPANTES_COOKIE_KEY);
+            // 3. Construir objetos Saida para os registros anteriores
+            const arrayDeSaidas: Saida[] = [];
+            let ultimoTempoDeFala = 0;
+            dadosParticipantesAnteriores.forEach((dadosAnterior, index) => {
+                let horarioDeSaidaAnterior = 0;
+                if (dadosAnterior.entradaNaSala && dadosAnterior.tempoPresenca) {
+                    horarioDeSaidaAnterior = dadosAnterior.entradaNaSala + dadosAnterior.tempoPresenca;
+                } else if (dadosAnterior.timeoutMeet) {
+                    horarioDeSaidaAnterior = dadosAnterior.timeoutMeet;
+                }
+                ultimoTempoDeFala = dadosAnterior.tempoDeFala;
+                const saida = new Saida(
+                    index + 1,
+                    horarioDeSaidaAnterior,
+                    formatTimeFromMilliseconds(horarioDeSaidaAnterior),
+                    dadosAnterior.horaRetorno || '--',
+                    dadosAnterior.id,
+                    dadosAnterior.tempoDeFala || 0,
+                    dadosAnterior.entradaNaSala || 0
+                );
+                arrayDeSaidas.push(saida);
+            });
+
+            // 4. Atribuir todas as propriedades encontradas ao participante existente.
+            dadosParticipantePrincipal.isReturned = true;
+            dadosParticipantePrincipal.tempoDeFala = ultimoTempoDeFala;
+            Object.assign(participante, dadosParticipantePrincipal);
+
+            // 5. Atribuir o histórico de saídas ao participante existente.
+            participante.saidas = arrayDeSaidas;
+
+            console.log(`==== atualizarParticipanteComDadosDoStorage === 4. Participante "${participante.name}" ATUALIZADO com os dados do storage:`, participante);
+            if (arrayDeSaidas.length > 0) {
+                console.log('==== atualizarParticipanteComDadosDoStorage === 5. Dados de IDs anteriores consolidados em "saidas":', arrayDeSaidas);
+            }
+
+        } catch (error) {
+            console.error('==== atualizarParticipanteComDadosDoStorage === 6. Erro ao processar lista de participantes do storage:', error);
+            // CHANGED: Remove o item do localStorage.
+            localStorage.removeItem(LISTA_PARTICIPANTES_STORAGE_KEY);
+        }
     }
-  }
 
   public getParticipantNames(): IChaveDataBase[] {
     try {
@@ -583,57 +576,51 @@ class DataBaseForGauge {
        * @param participanteParaSalvar O objeto Participante a ser salvo ou atualizado.
        */
       //
-      const salvarOuAtualizarParticipanteNaListaNoCookie = (
-        participanteParaSalvar: Participante // Pode ser também um objeto com a estrutura de Participante
-      ): void => {
-        // 1. Recuperar a lista atual de participantes do cookie
-        const listaJSON = Cookies.get(LISTA_PARTICIPANTES_COOKIE_KEY);
-        let listaParticipantes: Participante[] = []; // Use o tipo Participante ou any se preferir
+       // CHANGED: Função interna renomeada e modificada para usar localStorage.
+            const salvarOuAtualizarParticipanteNoStorage = (
+                participanteParaSalvar: Participante
+            ): void => {
+                // 1. Recuperar a lista atual do localStorage
+                // CHANGED: Lê do localStorage.
+                const listaJSON = localStorage.getItem(LISTA_PARTICIPANTES_STORAGE_KEY);
+                let listaParticipantes: Participante[] = [];
 
-        if (listaJSON) {
-          try {
-            listaParticipantes = JSON.parse(listaJSON);
-            // É uma boa prática garantir que seja um array
-            if (!Array.isArray(listaParticipantes)) {
-              console.warn('Conteúdo do cookie não era um array. Iniciando com lista vazia.');
-              listaParticipantes = [];
-            }
-          } catch (error) {
-            console.error('Erro ao parsear lista de participantes do cookie:', error);
-            // Se houver erro, podemos optar por começar com uma lista vazia
-            // ou remover o cookie corrompido.
-            listaParticipantes = [];
-            Cookies.remove(LISTA_PARTICIPANTES_COOKIE_KEY);
-          }
-        }
+                if (listaJSON) {
+                    try {
+                        listaParticipantes = JSON.parse(listaJSON);
+                        if (!Array.isArray(listaParticipantes)) {
+                            console.warn('Conteúdo do storage não era um array. Iniciando com lista vazia.');
+                            listaParticipantes = [];
+                        }
+                    } catch (error) {
+                        console.error('Erro ao parsear lista de participantes do storage:', error);
+                        listaParticipantes = [];
+                        // CHANGED: Remove o item do localStorage.
+                        localStorage.removeItem(LISTA_PARTICIPANTES_STORAGE_KEY);
+                    }
+                }
 
-        // 2. Verificar se o participante já existe na lista (pelo id)
-        const indiceExistente = listaParticipantes.findIndex(
-          (p) => p.id === participanteParaSalvar.id
-        );
+                // 2. Verificar se o participante já existe na lista (pelo id)
+                const indiceExistente = listaParticipantes.findIndex(p => p.id === participanteParaSalvar.id);
 
-        // 3. Se existir, atualizar. Se não, adicionar.
-        if (indiceExistente !== -1) {
-          // Participante existe, então atualiza
-          listaParticipantes[indiceExistente] = participanteParaSalvar;
-          console.log(`Participante com ID "${participanteParaSalvar.id}" atualizado na lista.`);
-        } else {
-          // Participante não existe, então adiciona
-          listaParticipantes.push(participanteParaSalvar);
-          console.log(`Participante com ID "${participanteParaSalvar.id}" adicionado à lista.`);
-        }
+                // 3. Se existir, atualizar. Se não, adicionar.
+                if (indiceExistente !== -1) {
+                    listaParticipantes[indiceExistente] = participanteParaSalvar;
+                    console.log(`Participante com ID "${participanteParaSalvar.id}" atualizado na lista.`);
+                } else {
+                    listaParticipantes.push(participanteParaSalvar);
+                    console.log(`Participante com ID "${participanteParaSalvar.id}" adicionado à lista.`);
+                }
 
-        // 4. Salvar a lista modificada de volta no cookie
-        try {
-          Cookies.set(LISTA_PARTICIPANTES_COOKIE_KEY, JSON.stringify(listaParticipantes), {
-            expires: 7, // Define a expiração do cookie (ex: 7 dias)
-          });
-          console.log('Lista de participantes salva no cookie.');
-        } catch (error) {
-          console.error('Erro ao salvar lista de participantes no cookie:', error);
-          // Aqui você pode querer tratar o erro, por exemplo, se a lista for muito grande.
-        }
-      };
+                // 4. Salvar a lista modificada de volta no localStorage
+                try {
+                    // CHANGED: Salva no localStorage. A opção 'expires' não existe aqui.
+                    localStorage.setItem(LISTA_PARTICIPANTES_STORAGE_KEY, JSON.stringify(listaParticipantes));
+                    console.log('Lista de participantes salva no localStorage.');
+                } catch (error) {
+                    console.error('Erro ao salvar lista de participantes no localStorage (pode ter excedido o limite):', error);
+                }
+            };;
 
       const atualizarParticipante = (idkey: any, participante: Participante, stats: ISpeaker, now: number) => {
         participante.id = idkey;
@@ -641,7 +628,9 @@ class DataBaseForGauge {
         participante.tempoPresenca = now - participante.entradaNaSala;
         participante.fatorTempoPresenca = 0;
         participante.fatorAcumuladoCurvaLorenz = 0;
-        salvarOuAtualizarParticipanteNaListaNoCookie(participante);
+
+        // Salva os dados do participante no Storage Criado
+        salvarOuAtualizarParticipanteNoStorage(participante);
         console.log(`==== 6. processarParticipante  --> participante atualizado ${participante.id}: `, participante);
       };
 
@@ -669,16 +658,16 @@ class DataBaseForGauge {
         };
 
         /**
-         * Verifica se o participante novo está no cookie guardado
+         * Verifica se o participante novo está no storage guardado
          */
-        DataBaseForGauge.atualizarParticipanteComDadosDoCookie(novoParticipante);
+        salvarOuAtualizarParticipanteNoStorage(participante);
 
         console.log(`==== 4. processarParticipante  --> novo participante ${novoParticipante.id}: `, novoParticipante);
 
         /**
-         * Salva o participante em um cookie no computador local
+         * Salva o participante em um storage no computador local
          */
-        salvarOuAtualizarParticipanteNaListaNoCookie(novoParticipante);
+        salvarOuAtualizarParticipanteNoStorage(novoParticipante);
         /*----------------------------------------*/
 
         DataBaseForGauge.participantes.push(novoParticipante);

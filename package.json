@@ -125,6 +125,7 @@
     "semver": "7.5.4",
     "text-encoding": "0.7.0",
     "tss-react": "4.9.4",
+    "use-local-storage-state": "^19.5.0",
     "util": "0.12.1",
     "uuid": "8.3.2",
     "wasm-check": "2.0.1",
