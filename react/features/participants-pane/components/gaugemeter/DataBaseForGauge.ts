@@ -521,6 +521,10 @@ class DataBaseForGauge {
 
   async processarParticipante(key: string, room: string): Promise<void> {
     try {
+      /**
+       * Salva ou Atualiza os dados do Participante no Storage
+       * @param participanteParaSalvar 
+       */
       const salvarOuAtualizarParticipanteNoStorage = (
         participanteParaSalvar: Participante
       ): void => {
@@ -534,7 +538,7 @@ class DataBaseForGauge {
               listaParticipantes = [];
             }
           } catch (error) {
-            console.error('Erro ao parsear lista de participantes do storage:', error);
+            console.error('==== salvarOuAtualizarParticipanteNoStorage ==== 1. Erro ao parsear lista de participantes do storage:', error);
             listaParticipantes = [];
             localStorage.removeItem(LISTA_PARTICIPANTES_STORAGE_KEY);
           }
@@ -550,9 +554,9 @@ class DataBaseForGauge {
 
         try {
           localStorage.setItem(LISTA_PARTICIPANTES_STORAGE_KEY, JSON.stringify(listaParticipantes));
-          console.log(`==== Salvo com sucesso no Storage o participante: ${participanteParaSalvar.name}`);
+          console.log(`==== salvarOuAtualizarParticipanteNoStorage ==== 2. Salvo com sucesso no Storage o participante: ${participanteParaSalvar.name}`);
         } catch (error) {
-          console.error('Erro ao salvar lista no localStorage (limite excedido?):', error);
+          console.error('==== salvarOuAtualizarParticipanteNoStorage ==== 3. Erro ao salvar lista no localStorage (limite excedido?):', error);
         }
       };
 
@@ -610,8 +614,10 @@ class DataBaseForGauge {
           const stats = speakerStats[nomeChave.key];
 
           if (existingParticipant) {
+            console.log(`==== processarParticipante === 1. Participante já existe no ParticPane: ${partic.name}`);
             atualizarParticipante(nomeChave.key, existingParticipant, stats, now);
           } else {
+            console.log(`==== processarParticipante === 1. Participante NÂO existe no ParticPane: ${partic.name}`);
             const participante = new Participante(nomeChave.key, room);
             adicionarParticipante(participante, stats, partic);
           }
