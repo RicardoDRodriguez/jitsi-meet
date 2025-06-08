@@ -292,7 +292,7 @@ class DataBaseForGauge {
 
         if (saidas.length > 0) {
           const ultimaSaida = saidas[saidas.length - 1];
-
+    
           if (!ultimaSaida.registroProcessado) {
             participante.entradaNaSala = ultimaSaida.horarioDeEntrada;
             ultimaSaida.registroProcessado = true;
