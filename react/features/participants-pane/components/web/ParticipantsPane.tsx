@@ -286,7 +286,7 @@ const ParticipantsPane = () => {
     return (
         <div className={cx('participants_pane', classes.participantsPane)}>
 
-            <div className={classes.header}> &&NBSP;
+            <div className={classes.header}> &NBSP;
             </div>
 
             <div className={classes.headerh3}>
