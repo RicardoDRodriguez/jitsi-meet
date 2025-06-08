@@ -290,7 +290,7 @@ class DataBaseForGauge {
       DataBaseForGauge.participantes.forEach((participante) => {
         const saidas = participante.saidas ?? [];
 
-        if (! participante.isOut && saidas.length > 0) {
+        if (saidas.length > 0) {
           const ultimaSaida = saidas[saidas.length - 1];
 
           if (!ultimaSaida.registroProcessado) {
