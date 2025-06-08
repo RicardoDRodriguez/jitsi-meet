@@ -18,6 +18,19 @@ interface IChaveDataBase {
   nomeChave: any; // Campo obrigatório (não opcional)
 }
 
+// Tipagem auxiliar para ParticipanteStorage
+interface IParticipanteStorage {
+  name: string;
+  sala: string;
+  entradaNaSala?: number;
+  tempoPresenca?: number;
+  timeoutMeet?: number;
+  horaRetorno?: string;
+  id?: string;
+  tempoDeFala?: number;
+  isReturned?: boolean;
+}
+
 // Chave para refletir o uso do localStorage.
 const LISTA_PARTICIPANTES_STORAGE_KEY = 'DataBaseForGauge';
 
@@ -37,75 +50,6 @@ class DataBaseForGauge {
   private constructor() {
     // Inicialização da classe (se necessário)
     console.log("==== 0. ClearData = construtor do DataBaseForGauge chamado.");
-  }
-  static atualizarParticipanteComDadosDoStorage(participante: Participante): void {
-    const listaJSON = localStorage.getItem(LISTA_PARTICIPANTES_STORAGE_KEY);
-
-    if (!listaJSON) {
-      console.log(`==== atualizarParticipanteComDadosDoStorage === 1. Nenhuma lista de participantes encontrada no localStorage com a chave: ${LISTA_PARTICIPANTES_STORAGE_KEY}`);
-      return;
-    }
-
-    try {
-      const listaDadosParticipantes: any[] = JSON.parse(listaJSON);
-      if (!Array.isArray(listaDadosParticipantes)) {
-        console.error('==== atualizarParticipanteComDadosDoStorage === 2. Formato inválido no storage, não é um array.');
-        localStorage.removeItem(LISTA_PARTICIPANTES_STORAGE_KEY);
-        return;
-      }
-
-      const correspondentesCompletos = listaDadosParticipantes.filter(
-        p => p.name === participante.name &&
-          p.sala === participante.sala
-      );
-
-      if (correspondentesCompletos.length === 0) {
-        console.log(`==== atualizarParticipanteComDadosDoStorage === 3. Nenhum participante "${participante.name}" na sala "${participante.sala}" encontrado no storage.`);
-        return;
-      }
-
-      correspondentesCompletos.sort((a, b) => (b.entradaNaSala || 0) - (a.entradaNaSala || 0));
-
-      const dadosParticipantePrincipal = correspondentesCompletos[0];
-      const dadosParticipantesAnteriores = correspondentesCompletos.slice(1);
-
-      const arrayDeSaidas: Saida[] = [];
-      let ultimoTempoDeFala = 0;
-      dadosParticipantesAnteriores.forEach((dadosAnterior, index) => {
-        let horarioDeSaidaAnterior = 0;
-        if (dadosAnterior.entradaNaSala && dadosAnterior.tempoPresenca) {
-          horarioDeSaidaAnterior = dadosAnterior.entradaNaSala + dadosAnterior.tempoPresenca;
-        } else if (dadosAnterior.timeoutMeet) {
-          horarioDeSaidaAnterior = dadosAnterior.timeoutMeet;
-        }
-        ultimoTempoDeFala = dadosAnterior.tempoDeFala;
-        const saida = new Saida(
-          index + 1,
-          horarioDeSaidaAnterior,
-          formatTimeFromMilliseconds(horarioDeSaidaAnterior),
-          dadosAnterior.horaRetorno || '--',
-          dadosAnterior.id,
-          dadosAnterior.tempoDeFala || 0,
-          dadosAnterior.entradaNaSala || 0
-        );
-        arrayDeSaidas.push(saida);
-      });
-
-      dadosParticipantePrincipal.isReturned = true;
-      dadosParticipantePrincipal.tempoDeFala = ultimoTempoDeFala;
-      Object.assign(participante, dadosParticipantePrincipal);
-
-      participante.saidas = arrayDeSaidas;
-
-      console.log(`==== atualizarParticipanteComDadosDoStorage === 4. Participante "${participante.name}" ATUALIZADO com os dados do storage:`, participante);
-      if (arrayDeSaidas.length > 0) {
-        console.log('==== atualizarParticipanteComDadosDoStorage === 5. Dados de IDs anteriores consolidados em "saidas":', arrayDeSaidas);
-      }
-
-    } catch (error) {
-      console.error('==== atualizarParticipanteComDadosDoStorage === 6. Erro ao processar lista de participantes do storage:', error);
-      localStorage.removeItem(LISTA_PARTICIPANTES_STORAGE_KEY);
-    }
   }
 
   public getParticipantNames(): IChaveDataBase[] {
@@ -513,7 +457,7 @@ class DataBaseForGauge {
       );
       retorno = totalTempoDeFalaEmMinutos / DataBaseForGauge.participantes.length;
     } catch (error: any) {
-      console.error("==== CalcularMeida Tempo de fala - Error calculating Gini index:", error);
+      console.error("==== CalcularMedia Tempo de fala - Error calculating Gini index:", error);
       retorno = 0;
     }
     return retorno;
@@ -568,6 +512,108 @@ class DataBaseForGauge {
         salvarOuAtualizarParticipanteNoStorage(participante);
       };
 
+      /**
+       * Atualiza dados do participante com o que se encontra no storage
+       * @param participante 
+       * @returns void
+       */
+
+      const atualizarParticipanteComDadosDoStorage = (participante: Participante): void => {
+        const listaJSON = localStorage.getItem(LISTA_PARTICIPANTES_STORAGE_KEY);
+
+        if (!listaJSON) {
+          console.log(`==== atualizarParticipanteComDadosDoStorage === 1. Nenhuma lista de participantes encontrada no localStorage com a chave: ${LISTA_PARTICIPANTES_STORAGE_KEY}`);
+          return;
+        }
+
+        try {
+          const listaDadosParticipantes: unknown = JSON.parse(listaJSON);
+
+          // Verificação robusta do tipo
+          if (!Array.isArray(listaDadosParticipantes)) {
+            console.error('==== atualizarParticipanteComDadosDoStorage === 2. Formato inválido no storage, não é um array.');
+            localStorage.removeItem(LISTA_PARTICIPANTES_STORAGE_KEY);
+            return;
+          }
+
+          // Filtra usando propriedades obrigatórias
+          const correspondentesCompletos = listaDadosParticipantes.filter(
+            (p): p is IParticipanteStorage =>
+              typeof p === 'object' &&
+              p !== null &&
+              'name' in p &&
+              'sala' in p &&
+              p.name === participante.name &&
+              p.sala === participante.sala
+          );
+
+          if (correspondentesCompletos.length === 0) {
+            console.log(`==== atualizarParticipanteComDadosDoStorage === 3. Nenhum participante "${participante.name}" na sala "${participante.sala}" encontrado no storage.`);
+            return;
+          }
+
+          // Ordenação segura com fallback
+          correspondentesCompletos.sort((a, b) => {
+            const timeA = a.entradaNaSala ?? a.timeoutMeet ?? 0;
+            const timeB = b.entradaNaSala ?? b.timeoutMeet ?? 0;
+            return timeB - timeA;
+          });
+
+          const [dadosParticipantePrincipal, ...dadosParticipantesAnteriores] = correspondentesCompletos;
+          const arrayDeSaidas: Saida[] = [];
+
+          // Acumula o tempo de fala corretamente
+          let tempoDeFalaAcumulado = 0;
+
+          dadosParticipantesAnteriores.forEach((dadosAnterior, index) => {
+            // Calcula horário de saída
+            const horarioDeSaidaAnterior =
+              dadosAnterior.entradaNaSala && dadosAnterior.tempoPresenca
+                ? dadosAnterior.entradaNaSala + dadosAnterior.tempoPresenca
+                : dadosAnterior.timeoutMeet ?? 0;
+
+            // Acumula tempo de fala
+            tempoDeFalaAcumulado += dadosAnterior.tempoDeFala ?? 0;
+
+            arrayDeSaidas.push(new Saida(
+              index + 1,
+              horarioDeSaidaAnterior,
+              formatTimeFromMilliseconds(horarioDeSaidaAnterior),
+              dadosAnterior.horaRetorno || '--',
+              dadosAnterior.id || '',
+              dadosAnterior.tempoDeFala || 0,
+              dadosAnterior.entradaNaSala || 0
+            ));
+          });
+
+          // Atualiza o participante principal
+          const participanteAtualizado: Participante = {
+            ...participante,  // Mantém dados existentes
+            ...dadosParticipantePrincipal,  // Sobrescreve com dados do storage
+            isReturned: true,
+            tempoDeFala: (dadosParticipantePrincipal.tempoDeFala || 0) + tempoDeFalaAcumulado,
+            saidas: arrayDeSaidas
+          };
+
+          Object.assign(participante, participanteAtualizado);
+
+          console.log(`==== atualizarParticipanteComDadosDoStorage === 4. Participante "${participante.name}" ATUALIZADO:`, participante);
+          if (arrayDeSaidas.length > 0) {
+            console.log('==== atualizarParticipanteComDadosDoStorage === 5. Saidas:', arrayDeSaidas);
+          }
+
+        } catch (error) {
+          console.error('==== atualizarParticipanteComDadosDoStorage === 6. Erro ao processar dados:', error);
+          localStorage.removeItem(LISTA_PARTICIPANTES_STORAGE_KEY);
+        }
+      };
+
+      /**
+       * Adiciona novo participante
+       * @param participante 
+       * @param stats 
+       * @param partic 
+       */
       const adicionarParticipante = (participante: Participante, stats: ISpeaker, partic: IParticipant) => {
         const user = APP.conference.getParticipantById(partic.id);
 
@@ -588,10 +634,11 @@ class DataBaseForGauge {
           fatorAcumuladoCurvaLorenz: 0
         };
 
-        console.log(`==== adicionarParticipante === 1. Criado objeto base para: ${novoParticipante.name}`);
+        
 
-        // 2. CORREÇÃO: Chama a função para LER dados históricos do storage e fundir com o novo participante
-        // DataBaseForGauge.atualizarParticipanteComDadosDoStorage(novoParticipante);
+        // Chama a função para LER dados históricos do storage e fundir com o novo participante
+        console.log(`==== adicionarParticipante === 1. checar os dados do Participante com Dados no Storage: ${novoParticipante.name} - ${novoParticipante.sala}`);
+        atualizarParticipanteComDadosDoStorage(novoParticipante);
 
         console.log(`==== adicionarParticipante === 2. Após checar storage, estado final de ${novoParticipante.name}:`, novoParticipante);
 
