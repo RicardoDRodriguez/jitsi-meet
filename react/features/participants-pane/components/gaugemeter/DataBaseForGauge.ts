@@ -285,21 +285,33 @@ class DataBaseForGauge {
     try {
       await this.loadParticipantes();
 
+      console.log(`==== 1. getParticipantes  --> Atualiza o tempo de fala de cada participante se ele sair`);
+
+      DataBaseForGauge.participantes.forEach((participante) => {
+        const saidas = participante.saidas ?? [];
+
+        if (saidas.length > 0) {
+          const ultimaSaida = saidas[saidas.length - 1];
+
+          if (!ultimaSaida.registroProcessado) {
+            participante.entradaNaSala = ultimaSaida.horarioDeEntrada;
+            ultimaSaida.registroProcessado = true;
+            participante.tempoDeFala += ultimaSaida.tempoDeFala;
+          }
+        }
+      });
+
+
+
       const totalTempoDeFalaEmMinutos = DataBaseForGauge.participantes.reduce(
         (total, participante) => total + Number(participante.tempoDeFala), 0
       );
+      console.log(`==== 2. getParticipantes  --> total de tempo de fala ${totalTempoDeFalaEmMinutos}: `);
 
-      console.log(`==== 1. getParticipantes  --> total de tempo de fala ${totalTempoDeFalaEmMinutos}: `);
       DataBaseForGauge.participantes.forEach((participante) => {
-        const saidas: any = participante.saidas;
-        let ultimaSaida = 0;
-        if (saidas && saidas.length > 0) {
-          ultimaSaida = saidas[saidas.length - 1].tempoDeFala;
-          participante.entradaNaSala = saidas[saidas.length - 1].horarioDeEntrada
-        }
-        participante.tempoDeFala += ultimaSaida // Soma o valor acumulado do tempo de fala anterior com o tempo atual
-        participante.percentualAcumuloFala = ((participante.tempoDeFala + ultimaSaida) / totalTempoDeFalaEmMinutos) * 100;
+        participante.percentualAcumuloFala = ((participante.tempoDeFala) / totalTempoDeFalaEmMinutos) * 100;
       });
+      console.log(`==== 3. getParticipantes  --> recaulcula o percentualAcumulo de fala de cada participante`);
 
       const participantesOrdenadosDescrescente = DataBaseForGauge.participantes.slice().sort((a, b) => b.percentualAcumuloFala - a.percentualAcumuloFala);
       return participantesOrdenadosDescrescente;
@@ -634,7 +646,7 @@ class DataBaseForGauge {
           fatorAcumuladoCurvaLorenz: 0
         };
 
-        
+
 
         // Chama a função para LER dados históricos do storage e fundir com o novo participante
         console.log(`==== adicionarParticipante === 1. checar os dados do Participante com Dados no Storage: ${novoParticipante.name} - ${novoParticipante.sala}`);

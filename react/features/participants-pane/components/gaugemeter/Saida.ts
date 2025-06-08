@@ -27,6 +27,7 @@ class Saida {
   private _horaRetorno: string;
   private _tempoDeFala: number = 0;
   private _horarioDeEntrada: number = 0;
+  private _registroProcessado: boolean = false;
 
   constructor(
     sequencia: number = 0,
@@ -46,6 +47,7 @@ class Saida {
     this._id = id;
     this._tempoDeFala = tempoDeFala;
     this._horarioDeEntrada = horarioDeEntrada
+    this._registroProcessado = false
   }
 
   // Métodos get e set para o campo 'sequencia'
@@ -111,14 +113,23 @@ class Saida {
     this._horarioDeEntrada = value;
   }
 
-
+  // Métodos get e set para o campo 'tempoDeFala'
   set tempoDeFala(value: number) {
     this._tempoDeFala = value;
   }
-    // Métodos get e set para o campo 'tempoDeFala'
+    
   get tempoDeFala(): number {
     return this._tempoDeFala;
   }
+  
+  // Métodos get e set para o campo 'registroProcessado'
+  set registroProcessado(value: boolean) {
+    this._registroProcessado = value;
+  }
+  get registroProcessado(): boolean {
+    return this._registroProcessado;
+  }
+
 }
 
 export default Saida;
