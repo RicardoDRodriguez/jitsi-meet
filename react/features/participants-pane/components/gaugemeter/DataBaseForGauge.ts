@@ -301,8 +301,6 @@ class DataBaseForGauge {
         }
       });
 
-
-
       const totalTempoDeFalaEmMinutos = DataBaseForGauge.participantes.reduce(
         (total, participante) => total + Number(participante.tempoDeFala), 0
       );
