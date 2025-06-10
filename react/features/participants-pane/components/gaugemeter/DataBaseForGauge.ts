@@ -218,15 +218,28 @@ class DataBaseForGauge {
   async loadParticipantes(): Promise<void> {
     try {
       console.log(`==== 1. loadParticipantes --> Limpando os dados de DataBaseForGauge`);
+      /**
+       * Checa se os participantes estão presentes ou não
+       */
       this.clearData();
 
       console.log(`==== 2. loadParticipantes --> Carregando a funcao setStateAndConference`);
+      /**
+       * Seta as variáveis de conferência e sala da sessão de videoconferência
+       */
       this.setStateAndConference();
 
-      //Carrega Id de participantes de function
+      /**
+       * Carrega Id de participantes de function
+       */
       let sortedParticipantIds: any = getSortedParticipantIds(DataBaseForGauge.state);
+      
       console.log(`==== 3. loadParticipantes --> Carregando a variavel iReorderedParticipants`, sortedParticipantIds);
+      /**
+       * Carrega os dados dos participantes a partir dos ids contidos no vetor de participantes
+       */
       this.carregarParticipantes(sortedParticipantIds);
+
     } catch (error: any) {
       console.error('==== 4. loadParticipantes --> Erro ao carregar participantes:', error);
       // throw error; // Re-lança o erro para que chamadores possam tratá-lo se necessário
