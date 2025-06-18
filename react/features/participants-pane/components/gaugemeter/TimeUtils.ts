@@ -16,19 +16,32 @@ export function formatTimeFromMilliseconds(milliseconds: number): string {
         const msPerMinute = msPerSecond * 60;
         const msPerHour = msPerMinute * 60;
         const msPerDay = msPerHour * 24;
+        const msPerWeek = msPerDay * 7;
+        // Approximation for a month, as it varies (using 30.44 days for an average month)
+        const msPerMonth = msPerDay * 30.44; 
 
-        const days = Math.floor(milliseconds / msPerDay);
-        const hours = Math.floor((milliseconds % msPerDay) / msPerHour);
-        const minutes = Math.floor((milliseconds % msPerHour) / msPerMinute);
-        const seconds = Math.floor((milliseconds % msPerMinute) / msPerSecond);
+        const months = Math.floor(milliseconds / msPerMonth);
+        const remainingAfterMonths = milliseconds % msPerMonth;
+
+        const weeks = Math.floor(remainingAfterMonths / msPerWeek);
+        const remainingAfterWeeks = remainingAfterMonths % msPerWeek;
+
+        const days = Math.floor(remainingAfterWeeks / msPerDay);
+        const hours = Math.floor((remainingAfterWeeks % msPerDay) / msPerHour);
+        const minutes = Math.floor((remainingAfterWeeks % msPerHour) / msPerMinute);
+        const seconds = Math.floor((remainingAfterWeeks % msPerMinute) / msPerSecond);
 
         console.log('FormatTimeFromMilliseconds milliseconds:', milliseconds);
+        console.log('FormatTimeFromMilliseconds months:', months);
+        console.log('FormatTimeFromMilliseconds weeks:', weeks);
         console.log('FormatTimeFromMilliseconds days:', days);
         console.log('FormatTimeFromMilliseconds hours:', hours);
         console.log('FormatTimeFromMilliseconds minutes:', minutes);
         console.log('FormatTimeFromMilliseconds seconds:', seconds);
 
         const parts: string[] = [];
+        if (months > 0) parts.push(`${months}mês${months > 1 ? 'es' : ''}`);
+        if (weeks > 0) parts.push(`${weeks}sem`);
         if (days > 0) parts.push(`${days}d`);
         if (hours > 0) parts.push(`${hours}h`);
         if (minutes > 0) parts.push(`${minutes}m`);
@@ -44,6 +57,8 @@ export function formatTimeFromMilliseconds(milliseconds: number): string {
         return "0s";
     }
 }
+
+
 /**
  * Retorna no formato String a hora minuto e segundo
  * @returns HHh MNm SSs
