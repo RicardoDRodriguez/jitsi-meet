@@ -2,7 +2,7 @@
 
 /**
  * 
- * @param milliseconds formata em minutos e segundos o tempo h, m e s
+ * @param milliseconds formata em minutos e segundos o tempo d, h, m e s
  * @returns tempo formatado em minutos e segundos
  */
 
@@ -12,28 +12,33 @@ export function formatTimeFromMilliseconds(milliseconds: number): string {
             throw new Error('Valor inválido: deve ser um número positivo');
         }
 
-        const horas = Math.floor(milliseconds / (1000 * 60 * 60));
-        const minutos = Math.floor((milliseconds % (1000 * 60 * 60)) / (1000 * 60));
-        const segundos = Math.floor((milliseconds % (1000 * 60)) / 1000);
+        const msPerSecond = 1000;
+        const msPerMinute = msPerSecond * 60;
+        const msPerHour = msPerMinute * 60;
+        const msPerDay = msPerHour * 24;
 
-        console.log('FormatTimeFromMilliseconds millisegundos:', milliseconds);
-        console.log('FormatTimeFromMilliseconds horas:', horas);
-        console.log('FormatTimeFromMilliseconds minutos:', minutos);
-        console.log('FormatTimeFromMilliseconds segundos:', segundos);
+        const days = Math.floor(milliseconds / msPerDay);
+        const hours = Math.floor((milliseconds % msPerDay) / msPerHour);
+        const minutes = Math.floor((milliseconds % msPerHour) / msPerMinute);
+        const seconds = Math.floor((milliseconds % msPerMinute) / msPerSecond);
 
-        // Cria um array com as partes não-zero
-        const partes:any = [];
-        if (horas > 0) partes.push(`${horas}h`);
-        if (minutos > 0) partes.push(`${minutos}m`);
-        if (segundos > 0) partes.push(`${segundos}s`);
+        console.log('FormatTimeFromMilliseconds milliseconds:', milliseconds);
+        console.log('FormatTimeFromMilliseconds days:', days);
+        console.log('FormatTimeFromMilliseconds hours:', hours);
+        console.log('FormatTimeFromMilliseconds minutes:', minutes);
+        console.log('FormatTimeFromMilliseconds seconds:', seconds);
 
-        // Se todas as partes forem zero, retorna "0s"
-        if (partes.length === 0) {
+        const parts: string[] = [];
+        if (days > 0) parts.push(`${days}d`);
+        if (hours > 0) parts.push(`${hours}h`);
+        if (minutes > 0) parts.push(`${minutes}m`);
+        if (seconds > 0) parts.push(`${seconds}s`);
+
+        if (parts.length === 0) {
             return "0s";
         }
 
-        // Junta as partes com espaços
-        return partes.join(' ');
+        return parts.join(' ');
     } catch (error) {
         console.error('Erro ao formatar tempo:', error instanceof Error ? error.message : error);
         return "0s";
