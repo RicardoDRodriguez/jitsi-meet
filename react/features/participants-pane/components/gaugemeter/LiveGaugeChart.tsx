@@ -45,7 +45,7 @@ const LiveGaugeChart: React.FC<LiveGaugeChartProps> = () => {
   return (
     <div>
       <GaugeChart
-        id="gauge-chart1"
+        id="gauge-chart1"         
         style={chartStyle}
         animate={true}
         arcsLength={[0.3, 0.4, 0.3]}
